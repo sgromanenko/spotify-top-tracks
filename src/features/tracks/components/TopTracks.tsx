@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 
 import Button from '../../../components/common/Button';
@@ -6,6 +6,9 @@ import Select from '../../../components/common/Select';
 import { useSpotify } from '../../../context/SpotifyContext';
 import { SpotifyTrack } from '../../../services/spotify';
 import TrackItem from './TrackItem';
+
+// Lazy load AudioFeatures component
+const AudioFeatures = lazy(() => import('./AudioFeatures'));
 
 const Container = styled.div`
   width: 100%;
@@ -105,9 +108,33 @@ const NoTracksMessage = styled.p`
   padding: 2rem 0;
 `;
 
+interface ContentLayoutProps {
+  hasSelectedTrack: boolean;
+}
+
+const ContentLayout = styled.div<ContentLayoutProps>`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    grid-template-columns: ${props => (props.hasSelectedTrack ? '3fr 2fr' : '1fr')};
+  }
+`;
+
+const TrackListSection = styled.div`
+  width: 100%;
+`;
+
+const AudioFeaturesSection = styled.div`
+  width: 100%;
+`;
+
 interface TopTracksProps {
   onTrackSelect?: (track: SpotifyTrack) => void;
 }
+
+const LoadingFallback = () => <LoadingText>Loading audio features...</LoadingText>;
 
 /**
  * Component to display and interact with the user's top tracks from Spotify
@@ -185,23 +212,35 @@ const TopTracks: React.FC<TopTracksProps> = ({ onTrackSelect }) => {
         </>
       )}
 
-      {loading ? (
-        <LoadingText>Loading your top tracks...</LoadingText>
-      ) : tracks.length === 0 ? (
-        <NoTracksMessage>No tracks found for the selected time range.</NoTracksMessage>
-      ) : (
-        <TracksContainer>
-          {tracks.map((track, index) => (
-            <TrackItem
-              key={track.id}
-              track={track}
-              index={index}
-              isSelected={selectedTrack?.id === track.id}
-              onClick={() => handleTrackClick(track)}
-            />
-          ))}
-        </TracksContainer>
-      )}
+      <ContentLayout hasSelectedTrack={Boolean(selectedTrack)}>
+        <TrackListSection>
+          {loading ? (
+            <LoadingText>Loading your top tracks...</LoadingText>
+          ) : tracks.length === 0 ? (
+            <NoTracksMessage>No tracks found for the selected time range.</NoTracksMessage>
+          ) : (
+            <TracksContainer>
+              {tracks.map((track, index) => (
+                <TrackItem
+                  key={track.id}
+                  track={track}
+                  index={index}
+                  isSelected={selectedTrack?.id === track.id}
+                  onClick={() => handleTrackClick(track)}
+                />
+              ))}
+            </TracksContainer>
+          )}
+        </TrackListSection>
+
+        {selectedTrack && (
+          <AudioFeaturesSection>
+            <Suspense fallback={<LoadingFallback />}>
+              <AudioFeatures track={selectedTrack} />
+            </Suspense>
+          </AudioFeaturesSection>
+        )}
+      </ContentLayout>
     </Container>
   );
 };

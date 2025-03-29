@@ -1,23 +1,25 @@
 # Spotify Top Tracks App
 
-A simple React application that displays your top tracks from Spotify.
+A React application that displays your top tracks from Spotify with their audio features.
 
 ## Features
 
 - Display your top tracks from your Spotify listening history
-- Configure the number of tracks to display (5, 10, 20, or 50)
-- Choose the time range for your top tracks (4 weeks, 6 months, or all time)
+- Configure the number of tracks to display (10, 20, 30, or 50)
+- Choose the time range for your top tracks (last month, 6 months, or all time)
 - Play 30-second preview of tracks when available
 - View detailed audio features for each track (danceability, energy, etc.)
 - Browse your playlists
 - Clean, responsive UI with Spotify-inspired design
+- OAuth authentication with Spotify
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js and npm installed on your machine
-- A valid Spotify API token (pre-configured in the app for demo purposes)
+- A Spotify account (free or premium)
+- A registered Spotify application (see Authentication Setup below)
 
 ### Installation
 
@@ -28,38 +30,82 @@ A simple React application that displays your top tracks from Spotify.
 npm install
 ```
 
-3. Start the development server:
+3. Set up authentication (see next section)
+4. Start the development server:
 
 ```bash
 npm start
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## Important Note About Authentication
+### Authentication Setup
 
-The app currently uses a hardcoded Spotify API token that expires after a short time. For a production app, you would need to implement the proper Spotify Authorization flow:
+1. Visit the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/)
+2. Log in with your Spotify account
+3. Click "Create App"
+4. Fill in the required information:
+   - App name: "Spotify Top Tracks" (or any name you prefer)
+   - App description: Brief description of the app
+   - Redirect URI: `http://localhost:3000/callback`
+   - Website: Optional
+5. Accept the terms and click "Create"
+6. On your app's dashboard, click "Settings"
+7. Copy the Client ID
+8. Create a `.env` file in the root of the project (copy from `.env.example`):
 
-1. Register your app on [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/)
-2. Implement the OAuth 2.0 authorization flow using either:
-   - [Authorization Code Flow](https://developer.spotify.com/documentation/web-api/tutorials/code-flow)
-   - [Implicit Grant Flow](https://developer.spotify.com/documentation/web-api/tutorials/implicit-flow)
+```
+REACT_APP_SPOTIFY_CLIENT_ID=your_client_id_here
+REACT_APP_REDIRECT_URI=http://localhost:3000/callback
+```
 
-## Possible Future Enhancements
+9. Replace `your_client_id_here` with the Client ID you copied
 
-- Add ability to create playlists from your top tracks
-- Implement authentication flow for token refresh
-- Add visualizations for audio features (radar charts, etc.)
-- Add ability to compare different time periods
-- Show related artists and recommendations
-- Add support for multiple languages (i18n)
+## How Authentication Works
+
+This app uses the Spotify OAuth 2.0 Implicit Grant Flow:
+
+1. User clicks "Login with Spotify" button
+2. User is redirected to Spotify's authorization page
+3. User grants permission for the app to access their data
+4. Spotify redirects back to the app with an access token
+5. The app stores the token and uses it for API requests
+6. Token expires after 1 hour, and the user needs to log in again
+
+In a production environment, you might want to implement the Authorization Code Flow with PKCE for more security and automatic token refresh.
 
 ## Technologies Used
 
 - React
 - TypeScript
 - styled-components
+- React Router
 - Spotify Web API
+
+## Available Scripts
+
+In the project directory, you can run:
+
+### `npm start`
+
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+
+### `npm test`
+
+Launches the test runner in the interactive watch mode.
+
+### `npm run build`
+
+Builds the app for production to the `build` folder.
+
+### `npm run lint`
+
+Runs ESLint to check for code quality issues.
+
+### `npm run format`
+
+Runs Prettier to format the code according to the defined style.
 
 # Getting Started with Create React App
 

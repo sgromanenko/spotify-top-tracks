@@ -1,3 +1,5 @@
+import { getStoredToken } from '../auth/spotifyAuth';
+
 const BASE_URL = 'https://api.spotify.com';
 
 /**
@@ -7,7 +9,7 @@ export interface ApiClientOptions {
   method: string;
   endpoint: string;
   body?: any;
-  token: string;
+  token?: string; // Make token optional as we'll get it from storage if not provided
 }
 
 /**
@@ -25,9 +27,16 @@ export interface ApiError {
  */
 async function apiClient<T>({ method, endpoint, body, token }: ApiClientOptions): Promise<T> {
   try {
+    // Use provided token or get from storage
+    const authToken = token || getStoredToken();
+
+    if (!authToken) {
+      throw new Error('No authentication token available');
+    }
+
     const url = `${BASE_URL}/${endpoint}`;
     const headers = {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${authToken}`,
       'Content-Type': 'application/json',
     };
 
@@ -48,7 +57,7 @@ async function apiClient<T>({ method, endpoint, body, token }: ApiClientOptions)
 
       const errorData = await response.json().catch(() => null);
       throw new Error(
-        errorData?.error?.message || `HTTP Error ${response.status}: ${response.statusText}`
+        errorData?.error?.message || `HTTP Error ${response.status}: ${response.statusText}`,
       );
     }
 
