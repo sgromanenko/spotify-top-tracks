@@ -119,7 +119,7 @@ export const Grid: React.FC<GridProps> = ({
   children,
   columns = { sm: 1, md: 2, lg: 3, xl: 4 },
   gap = '1rem',
-  className
+  className,
 }) => {
   return (
     <StyledGrid columns={columns} gap={gap} className={className}>

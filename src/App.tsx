@@ -6,6 +6,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
 import { AuthProvider } from './context/AuthContext';
 import { SpotifyProvider } from './context/SpotifyContext';
+import CallbackHandler from './features/auth/components/CallbackHandler';
 import LoginPage from './features/auth/components/LoginPage';
 import { ThemeProvider } from './theme/ThemeContext';
 
@@ -48,7 +49,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/callback" element={<Navigate to="/" replace />} />
+            <Route path="/callback" element={<CallbackHandler />} />
             <Route
               path="/"
               element={

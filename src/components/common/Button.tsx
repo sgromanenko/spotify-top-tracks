@@ -64,7 +64,7 @@ const sizeStyles = {
   large: css`
     padding: 1rem 2rem;
     font-size: 1rem;
-  `
+  `,
 };
 
 const IconWrapper = styled.span`

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 import {
   clearStoredToken,
@@ -6,7 +6,7 @@ import {
   getStoredToken,
   loginWithSpotify,
   logout as logoutFromSpotify,
-  storeToken
+  storeToken,
 } from '../services/auth/spotifyAuth';
 
 interface AuthContextType {
@@ -15,6 +15,7 @@ interface AuthContextType {
   login: () => void;
   logout: () => void;
   loading: boolean;
+  refreshAuthState: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,27 +24,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for token in URL hash (after redirect from Spotify)
-    const { token: hashToken, expires_in } = getAccessTokenFromHash();
+  // Function to check for token and update state
+  const refreshAuthState = useCallback(() => {
+    // First check for token in localStorage
+    const storedToken = getStoredToken();
+    if (storedToken) {
+      setToken(storedToken);
+      return;
+    }
 
+    // If no token in storage, try to get from URL hash
+    const { token: hashToken, expires_in } = getAccessTokenFromHash();
     if (hashToken && expires_in) {
-      // Store new token
       storeToken(hashToken, expires_in);
       setToken(hashToken);
 
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     } else {
-      // Check for existing token in storage
-      const storedToken = getStoredToken();
-      if (storedToken) {
-        setToken(storedToken);
-      }
+      setToken(null);
     }
-
-    setLoading(false);
   }, []);
+
+  // Check for token on initial load
+  useEffect(() => {
+    refreshAuthState();
+    setLoading(false);
+  }, [refreshAuthState]);
+
+  // Periodically check token validity
+  useEffect(() => {
+    const checkTokenInterval = setInterval(() => {
+      if (token) {
+        // This will update our token state if it's expired
+        refreshAuthState();
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(checkTokenInterval);
+  }, [token, refreshAuthState]);
 
   const handleLogin = () => {
     loginWithSpotify();
@@ -60,7 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     token,
     login: handleLogin,
     logout: handleLogout,
-    loading
+    loading,
+    refreshAuthState,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

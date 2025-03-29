@@ -32,10 +32,10 @@ export async function fetchWebApi(endpoint: string, method: string, body?: any) 
   try {
     const res = await fetch(`https://api.spotify.com/${endpoint}`, {
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       method,
-      body: body ? JSON.stringify(body) : undefined
+      body: body ? JSON.stringify(body) : undefined,
     });
 
     if (!res.ok) {
@@ -43,8 +43,8 @@ export async function fetchWebApi(endpoint: string, method: string, body?: any) 
       return {
         error: {
           status: res.status,
-          message: errorData?.error?.message || `HTTP Error ${res.status}: ${res.statusText}`
-        }
+          message: errorData?.error?.message || `HTTP Error ${res.status}: ${res.statusText}`,
+        },
       };
     }
 
@@ -54,8 +54,8 @@ export async function fetchWebApi(endpoint: string, method: string, body?: any) 
     return {
       error: {
         status: 500,
-        message: error instanceof Error ? error.message : 'Unknown error occurred'
-      }
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
+      },
     };
   }
 }

@@ -47,7 +47,7 @@ const Flex: React.FC<FlexProps> = ({
   gap = '0',
   className,
   fullWidth = false,
-  fullHeight = false
+  fullHeight = false,
 }) => {
   return (
     <StyledFlex

@@ -1,18 +1,24 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../context/AuthContext';
+import LoadingIndicator from './LoadingIndicator';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, refreshAuthState } = useAuth();
   const location = useLocation();
 
+  // Check auth state whenever the route is accessed
+  useEffect(() => {
+    refreshAuthState();
+  }, [refreshAuthState]);
+
   if (loading) {
-    return <div>Loading authentication status...</div>;
+    return <LoadingIndicator fullScreen message="Verifying your authentication..." size="md" />;
   }
 
   if (!isAuthenticated) {

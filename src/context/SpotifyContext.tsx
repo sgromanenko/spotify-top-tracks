@@ -4,7 +4,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useState
+  useState,
 } from 'react';
 
 import { getTopTracks, SpotifyTrack, TimeRange } from '../services/spotify';
@@ -76,7 +76,7 @@ export const SpotifyProvider: React.FC<SpotifyProviderProps> = ({ children }) =>
     setSelectedTrack,
     setTimeRange,
     setTrackLimit,
-    refreshTracks
+    refreshTracks,
   };
 
   return <SpotifyContext.Provider value={value}>{children}</SpotifyContext.Provider>;
