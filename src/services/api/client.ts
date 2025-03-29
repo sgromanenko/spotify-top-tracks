@@ -37,13 +37,13 @@ async function apiClient<T>({ method, endpoint, body, token }: ApiClientOptions)
     const url = `${BASE_URL}/${endpoint}`;
     const headers = {
       Authorization: `Bearer ${authToken}`,
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     };
 
     const config: RequestInit = {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      body: body ? JSON.stringify(body) : undefined
     };
 
     const response = await fetch(url, config);
@@ -57,7 +57,7 @@ async function apiClient<T>({ method, endpoint, body, token }: ApiClientOptions)
 
       const errorData = await response.json().catch(() => null);
       throw new Error(
-        errorData?.error?.message || `HTTP Error ${response.status}: ${response.statusText}`,
+        errorData?.error?.message || `HTTP Error ${response.status}: ${response.statusText}`
       );
     }
 

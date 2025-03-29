@@ -47,14 +47,14 @@ export type TimeRange = 'short_term' | 'medium_term' | 'long_term';
  * @returns Promise that resolves to array of track objects
  */
 export async function getTopTracks(
-  limit: number = 10,
-  timeRange: TimeRange = 'long_term',
+  limit = 10,
+  timeRange: TimeRange = 'long_term'
 ): Promise<SpotifyTrack[]> {
   try {
     // Endpoint reference : https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
     const response = await apiClient<{ items: SpotifyTrack[] }>({
       method: 'GET',
-      endpoint: `v1/me/top/tracks?time_range=${timeRange}&limit=${limit}`,
+      endpoint: `v1/me/top/tracks?time_range=${timeRange}&limit=${limit}`
     });
     return response.items || [];
   } catch (error) {
@@ -68,11 +68,11 @@ export async function getTopTracks(
  * @param limit - Maximum number of playlists to return
  * @returns Promise that resolves to array of playlist objects
  */
-export async function getUserPlaylists(limit: number = 20): Promise<SpotifyPlaylist[]> {
+export async function getUserPlaylists(limit = 20): Promise<SpotifyPlaylist[]> {
   try {
     const response = await apiClient<{ items: SpotifyPlaylist[] }>({
       method: 'GET',
-      endpoint: `v1/me/playlists?limit=${limit}`,
+      endpoint: `v1/me/playlists?limit=${limit}`
     });
     return response.items || [];
   } catch (error) {
@@ -86,11 +86,11 @@ export async function getUserPlaylists(limit: number = 20): Promise<SpotifyPlayl
  * @param limit - Maximum number of tracks to return
  * @returns Promise that resolves to array of track objects
  */
-export async function getSavedTracks(limit: number = 20): Promise<SpotifyTrack[]> {
+export async function getSavedTracks(limit = 20): Promise<SpotifyTrack[]> {
   try {
     const response = await apiClient<{ items: { track: SpotifyTrack }[] }>({
       method: 'GET',
-      endpoint: `v1/me/tracks?limit=${limit}`,
+      endpoint: `v1/me/tracks?limit=${limit}`
     });
     return (response.items || []).map(item => item.track);
   } catch (error) {
@@ -108,7 +108,7 @@ export async function getAudioFeatures(trackId: string): Promise<any> {
   try {
     return await apiClient<any>({
       method: 'GET',
-      endpoint: `v1/audio-features/${trackId}`,
+      endpoint: `v1/audio-features/${trackId}`
     });
   } catch (error) {
     console.error('Error fetching audio features:', error);

@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useCallback, useEffect } from 'react';
+import React, { lazy, Suspense, useCallback } from 'react';
 import styled from 'styled-components';
 
 import Button from '../../../components/common/Button';
@@ -150,7 +150,7 @@ const TopTracks: React.FC<TopTracksProps> = ({ onTrackSelect }) => {
     setTimeRange,
     refreshTracks,
     selectedTrack,
-    setSelectedTrack,
+    setSelectedTrack
   } = useSpotify();
 
   const handleTrackClick = useCallback(
@@ -160,7 +160,7 @@ const TopTracks: React.FC<TopTracksProps> = ({ onTrackSelect }) => {
         onTrackSelect(track);
       }
     },
-    [onTrackSelect, setSelectedTrack],
+    [onTrackSelect, setSelectedTrack]
   );
 
   // Generate options for select dropdowns
@@ -168,13 +168,13 @@ const TopTracks: React.FC<TopTracksProps> = ({ onTrackSelect }) => {
     { value: 10, label: 'Top 10' },
     { value: 20, label: 'Top 20' },
     { value: 30, label: 'Top 30' },
-    { value: 50, label: 'Top 50' },
+    { value: 50, label: 'Top 50' }
   ];
 
   const timeRangeOptions = [
     { value: 'short_term', label: 'Last Month' },
     { value: 'medium_term', label: 'Last 6 Months' },
-    { value: 'long_term', label: 'All Time' },
+    { value: 'long_term', label: 'All Time' }
   ];
 
   return (

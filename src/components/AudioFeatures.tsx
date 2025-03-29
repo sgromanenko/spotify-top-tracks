@@ -172,38 +172,38 @@ const AudioFeatures: React.FC<AudioFeaturesProps> = ({ track }) => {
               name: 'danceability',
               value: data.danceability || 0,
               description: 'How suitable the track is for dancing',
-              color: '#1DB954',
+              color: '#1DB954'
             },
             {
               name: 'energy',
               value: data.energy || 0,
               description: 'Intensity and activity level',
-              color: '#FF5722',
+              color: '#FF5722'
             },
             {
               name: 'acousticness',
               value: data.acousticness || 0,
               description: 'Confidence of being acoustic',
-              color: '#2196F3',
+              color: '#2196F3'
             },
             {
               name: 'valence',
               value: data.valence || 0,
               description: 'Musical positiveness (happy, cheerful)',
-              color: '#FFEB3B',
+              color: '#FFEB3B'
             },
             {
               name: 'instrumentalness',
               value: data.instrumentalness || 0,
               description: 'Whether a track contains no vocals',
-              color: '#9C27B0',
+              color: '#9C27B0'
             },
             {
               name: 'liveness',
               value: data.liveness || 0,
               description: 'Presence of audience in the recording',
-              color: '#4CAF50',
-            },
+              color: '#4CAF50'
+            }
           ];
           setFeatures(relevantFeatures);
         } else {

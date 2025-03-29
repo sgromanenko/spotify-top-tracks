@@ -39,7 +39,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
   height = '1rem',
   borderRadius = '4px',
   animation = true,
-  className,
+  className
 }) => {
   return (
     <StyledSkeleton
@@ -59,22 +59,22 @@ export const SkeletonText = styled(Skeleton)`
 `;
 
 export const SkeletonCircle = styled(Skeleton).attrs({
-  borderRadius: '50%',
+  borderRadius: '50%'
 })``;
 
 export const SkeletonAvatar = styled(SkeletonCircle).attrs({
   width: '40px',
-  height: '40px',
+  height: '40px'
 })``;
 
 export const SkeletonButton = styled(Skeleton).attrs(props => ({
   height: props.height || '36px',
-  borderRadius: props.borderRadius || '18px',
+  borderRadius: props.borderRadius || '18px'
 }))``;
 
 export const SkeletonCard = styled(Skeleton).attrs(props => ({
   height: props.height || '120px',
-  borderRadius: props.borderRadius || '8px',
+  borderRadius: props.borderRadius || '8px'
 }))``;
 
 export default Skeleton;

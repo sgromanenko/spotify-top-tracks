@@ -198,7 +198,7 @@ const PlaylistsSection: React.FC = () => {
         <EmptyStateContainer>
           <EmptyStateTitle>No Playlists Found</EmptyStateTitle>
           <EmptyStateText>
-            You don't have any playlists yet or we couldn't access them.
+            You don&apos;t have any playlists yet or we couldn&apos;t access them.
           </EmptyStateText>
         </EmptyStateContainer>
       </Container>

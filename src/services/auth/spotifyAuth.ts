@@ -9,7 +9,7 @@ const SCOPES = [
   'user-read-email',
   'user-top-read',
   'playlist-read-private',
-  'playlist-read-collaborative',
+  'playlist-read-collaborative'
 ].join('%20');
 
 /**
@@ -36,12 +36,12 @@ export const getAccessTokenFromHash = (): { token: string | null; expires_in: nu
         acc[key] = value;
         return acc;
       },
-      {} as Record<string, string>,
+      {} as Record<string, string>
     );
 
   return {
     token: hashParams.access_token || null,
-    expires_in: hashParams.expires_in ? parseInt(hashParams.expires_in, 10) : null,
+    expires_in: hashParams.expires_in ? parseInt(hashParams.expires_in, 10) : null
   };
 };
 

@@ -293,13 +293,13 @@ const AudioFeatures: React.FC<AudioFeaturesProps> = ({ track }) => {
           { name: 'Acousticness', value: data.acousticness },
           { name: 'Instrumentalness', value: data.instrumentalness },
           { name: 'Liveness', value: data.liveness },
-          { name: 'Speechiness', value: data.speechiness },
+          { name: 'Speechiness', value: data.speechiness }
         ];
 
         // Add human-friendly descriptions
         const featuresWithDescriptions = relevantFeatures.map(feature => ({
           ...feature,
-          description: getDescription(feature.name.toLowerCase(), feature.value),
+          description: getDescription(feature.name.toLowerCase(), feature.value)
         }));
 
         setFeatures(featuresWithDescriptions);

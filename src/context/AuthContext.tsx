@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 import {
-    clearStoredToken,
-    getAccessTokenFromHash,
-    getStoredToken,
-    loginWithSpotify,
-    logout as logoutFromSpotify,
-    storeToken,
+  clearStoredToken,
+  getAccessTokenFromHash,
+  getStoredToken,
+  loginWithSpotify,
+  logout as logoutFromSpotify,
+  storeToken
 } from '../services/auth/spotifyAuth';
 
 interface AuthContextType {
@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     token,
     login: handleLogin,
     logout: handleLogout,
-    loading,
+    loading
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -321,7 +321,7 @@ const TrackItem: React.FC<TrackItemProps> = ({ track, index, isSelected = false,
 
       setIsPlaying(!isPlaying);
     },
-    [isPlaying, hasPreview],
+    [isPlaying, hasPreview]
   );
 
   const handleContainerClick = () => {

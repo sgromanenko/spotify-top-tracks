@@ -16,7 +16,7 @@ const StyledContainer = styled.div<{ size: ContainerSize }>`
   padding-left: ${({ theme }) => theme.space.md};
   padding-right: ${({ theme }) => theme.space.md};
 
-  ${({ size, theme }) => {
+  ${({ size }) => {
     switch (size) {
       case 'sm':
         return `max-width: 640px;`;
