@@ -48,7 +48,7 @@ export type TimeRange = 'short_term' | 'medium_term' | 'long_term';
  */
 export async function getTopTracks(
   limit = 10,
-  timeRange: TimeRange = 'long_term'
+  timeRange: TimeRange = 'long_term',
 ): Promise<SpotifyTrack[]> {
   try {
     // Endpoint reference : https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
@@ -96,22 +96,5 @@ export async function getSavedTracks(limit = 20): Promise<SpotifyTrack[]> {
   } catch (error) {
     console.error('Error fetching saved tracks:', error);
     return [];
-  }
-}
-
-/**
- * Fetches the audio features for a track from Spotify API
- * @param trackId - Spotify ID of the track
- * @returns Promise that resolves to the audio features object
- */
-export async function getAudioFeatures(trackId: string): Promise<any> {
-  try {
-    return await apiClient<any>({
-      method: 'GET',
-      endpoint: `v1/audio-features/${trackId}`,
-    });
-  } catch (error) {
-    console.error('Error fetching audio features:', error);
-    throw error;
   }
 }

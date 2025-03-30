@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
 import { AuthProvider } from './context/AuthContext';
+import { PlayerProvider } from './context/PlayerContext';
 import { SpotifyProvider } from './context/SpotifyContext';
 import CallbackHandler from './features/auth/components/CallbackHandler';
 import LoginPage from './features/auth/components/LoginPage';
@@ -54,9 +55,11 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute>
-                  <SpotifyProvider>
-                    <MainLayout />
-                  </SpotifyProvider>
+                  <PlayerProvider>
+                    <SpotifyProvider>
+                      <MainLayout />
+                    </SpotifyProvider>
+                  </PlayerProvider>
                 </ProtectedRoute>
               }
             >

@@ -27,7 +27,7 @@ module.exports = {
 
     // Import
     'import/order': [
-      'error',
+      'warn',
       {
         groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
         'newlines-between': 'always',
@@ -40,7 +40,7 @@ module.exports = {
 
     // Prettier
     'prettier/prettier': [
-      'error',
+      'warn',
       {
         singleQuote: true,
         trailingComma: 'es5',

@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { useAuth } from '../../context/AuthContext';
-import Button from '../shared/Button';
+import { usePlayer } from '../../context/PlayerContext';
+import Button from '../common/Button';
+import SpotifyPlayer from '../player/SpotifyPlayer';
 
 const Header = styled.header`
   background-color: ${({ theme }) => theme.colors.background.elevated};
@@ -37,6 +39,7 @@ const Content = styled.main`
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
+  padding-bottom: 7rem; /* Add padding to prevent content from being hidden by the player */
 `;
 
 const StyledNavLink = styled(NavLink)`
@@ -66,6 +69,10 @@ const UserSection = styled.div`
 
 const MainLayout: React.FC = () => {
   const { logout } = useAuth();
+  const { isReady, playerState } = usePlayer();
+
+  // Determine whether to show the player based on whether it's initialized and has a track
+  const showPlayer = isReady && playerState;
 
   return (
     <AppContainer>
@@ -76,7 +83,7 @@ const MainLayout: React.FC = () => {
           <StyledNavLink to="/playlists">Playlists</StyledNavLink>
         </NavContainer>
         <UserSection>
-          <Button onClick={logout} variant="ghost" size="sm">
+          <Button onClick={logout} variant="secondary" size="small">
             Logout
           </Button>
         </UserSection>
@@ -84,6 +91,7 @@ const MainLayout: React.FC = () => {
       <Content>
         <Outlet />
       </Content>
+      {showPlayer && <SpotifyPlayer />}
     </AppContainer>
   );
 };

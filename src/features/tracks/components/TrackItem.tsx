@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import styled from 'styled-components';
 
+import { usePlayer } from '../../../context/PlayerContext';
 import { SpotifyTrack } from '../../../services/spotify';
 
 interface TrackItemProps {
@@ -254,98 +255,47 @@ const PauseIcon = () => (
  * Component to display a single track with playback controls
  */
 const TrackItem: React.FC<TrackItemProps> = ({ track, index, isSelected = false, onClick }) => {
-  const progressIntervalRef = useRef<number | null>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [_progress, setProgress] = useState(0);
-  const hasPreview = Boolean(track.preview_url);
-  const artistNames = track.artists.map(artist => artist.name).join(', ');
-  const albumImage = track.album.images[0]?.url || 'https://via.placeholder.com/45';
+  const [isHovered, setIsHovered] = useState(false);
+  const { playTrack, isPlaying, playerState } = usePlayer();
 
-  const handlePlaybackEnded = useCallback(() => {
-    setIsPlaying(false);
-    setProgress(0);
-    if (progressIntervalRef.current) {
-      window.clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-  }, []);
+  // Check if this track is currently playing
+  const isCurrentTrack = playerState?.track_window?.current_track?.id === track.id;
+  const isTrackPlaying = isPlaying && isCurrentTrack;
 
-  useEffect(() => {
-    if (!audioRef.current) return;
-
-    audioRef.current.addEventListener('ended', handlePlaybackEnded);
-
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.removeEventListener('ended', handlePlaybackEnded);
-      }
-      if (progressIntervalRef.current) {
-        window.clearInterval(progressIntervalRef.current);
-      }
-    };
-  }, [track.preview_url, hasPreview, handlePlaybackEnded]);
-
-  const togglePlay = useCallback(
+  // Handle playback
+  const handlePlayClick = useCallback(
     (e: React.MouseEvent) => {
-      e.stopPropagation(); // Prevent triggering track selection
+      e.stopPropagation();
 
-      if (!hasPreview || !audioRef.current) return;
-
-      if (isPlaying) {
-        audioRef.current.pause();
-        if (progressIntervalRef.current) {
-          window.clearInterval(progressIntervalRef.current);
-          progressIntervalRef.current = null;
-        }
-      } else {
-        // Stop any other playing audio first
-        const allAudios = document.querySelectorAll('audio');
-        allAudios.forEach(audio => audio.pause());
-
-        // Play this track
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(error => {
-          console.error('Error playing audio:', error);
-        });
-
-        // Update progress
-        progressIntervalRef.current = window.setInterval(() => {
-          if (audioRef.current) {
-            const currentProgress =
-              (audioRef.current.currentTime / audioRef.current.duration) * 100;
-            setProgress(currentProgress);
-          }
-        }, 1000);
+      // If this track is already playing, the PlayerContext's togglePlay will be used
+      // through the SpotifyPlayer component
+      if (!isCurrentTrack) {
+        playTrack(`spotify:track:${track.id}`);
       }
-
-      setIsPlaying(!isPlaying);
     },
-    [isPlaying, hasPreview]
+    [track.id, isCurrentTrack, playTrack],
   );
 
-  const handleContainerClick = () => {
-    if (onClick) onClick();
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      if (onClick) onClick();
+  // Handle track selection (for display in the AudioFeatures component)
+  const handleTrackClick = useCallback(() => {
+    if (onClick) {
+      onClick();
     }
-  };
+  }, [onClick]);
+
+  // Album artwork and artists
+  const albumImage = track.album.images[0]?.url || 'https://via.placeholder.com/45';
+  const artistNames = track.artists.map(artist => artist.name).join(', ');
 
   return (
     <TrackContainer
       isSelected={isSelected}
-      onClick={handleContainerClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="button"
-      aria-pressed={isSelected}
-      aria-label={`Select ${track.name} by ${artistNames}`}
+      onClick={handleTrackClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      aria-label={`Track ${index + 1}: ${track.name} by ${artistNames}`}
     >
-      <TrackNumber aria-hidden="true">{index + 1}</TrackNumber>
+      <TrackNumber>{isHovered ? '►' : index + 1}</TrackNumber>
       <TrackImage src={albumImage} alt={`Album cover for ${track.album.name}`} />
       <TrackInfo>
         <TrackName title={track.name}>{track.name}</TrackName>
@@ -354,20 +304,13 @@ const TrackItem: React.FC<TrackItemProps> = ({ track, index, isSelected = false,
       </TrackInfo>
       <AudioControl>
         <PlayButton
-          onClick={togglePlay}
-          disabled={!hasPreview}
-          isPlaying={isPlaying}
-          aria-label={isPlaying ? `Pause ${track.name}` : `Play ${track.name}`}
-          type="button"
+          onClick={handlePlayClick}
+          isPlaying={isTrackPlaying}
+          aria-label={isTrackPlaying ? `Pause ${track.name}` : `Play ${track.name}`}
         >
-          {isPlaying ? <PauseIcon /> : <PlayIcon />}
+          {isTrackPlaying ? '⏸' : '▶'}
         </PlayButton>
-        <AudioStatus isPlaying={isPlaying} aria-hidden="true" />
       </AudioControl>
-      {!hasPreview && <span className="sr-only">No audio preview available</span>}
-      <PreviewUnavailable hasPreview={hasPreview} aria-hidden="true">
-        No preview
-      </PreviewUnavailable>
     </TrackContainer>
   );
 };

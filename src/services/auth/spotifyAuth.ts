@@ -8,8 +8,13 @@ const SCOPES = [
   'user-read-private',
   'user-read-email',
   'user-top-read',
+  'user-library-read',
   'playlist-read-private',
   'playlist-read-collaborative',
+  'user-read-playback-state',
+  'user-modify-playback-state',
+  'streaming',
+  'app-remote-control',
 ].join('%20');
 
 /**

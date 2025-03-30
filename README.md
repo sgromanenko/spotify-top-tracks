@@ -1,14 +1,13 @@
 # Spotify Top Tracks App
 
-A React application that displays your top tracks from Spotify with their audio features.
+A React application that displays your top tracks from Spotify with full playback controls.
 
 ## Features
 
 - Display your top tracks from your Spotify listening history
 - Configure the number of tracks to display (10, 20, 30, or 50)
 - Choose the time range for your top tracks (last month, 6 months, or all time)
-- Play 30-second preview of tracks when available
-- View detailed audio features for each track (danceability, energy, etc.)
+- Play full tracks using the Spotify Web Playback SDK (requires Spotify Premium)
 - Browse your playlists
 - Clean, responsive UI with Spotify-inspired design
 - OAuth authentication with Spotify
@@ -18,7 +17,7 @@ A React application that displays your top tracks from Spotify with their audio 
 ### Prerequisites
 
 - Node.js and npm installed on your machine
-- A Spotify account (free or premium)
+- A Spotify account (Premium account required for full playback functionality)
 - A registered Spotify application (see Authentication Setup below)
 
 ### Installation
@@ -73,6 +72,17 @@ This app uses the Spotify OAuth 2.0 Implicit Grant Flow:
 6. Token expires after 1 hour, and the user needs to log in again
 
 In a production environment, you might want to implement the Authorization Code Flow with PKCE for more security and automatic token refresh.
+
+## Spotify Web Playback SDK
+
+This application uses the Spotify Web Playback SDK to enable playback of full tracks directly in the browser. Some key points about this integration:
+
+- **Premium Requirement**: The Web Playback SDK requires a Spotify Premium account (free accounts will not work)
+- **Browser Support**: The SDK is supported in most modern browsers (Chrome, Firefox, Safari, Edge)
+- **Playback Controls**: You can play, pause, skip tracks, and control volume
+- **Limitations on Mobile**: iOS has some limitations with playback control
+
+Please note that the Web Playback SDK is for personal/non-commercial use. For commercial applications, additional permissions from Spotify may be required.
 
 ## Technologies Used
 
@@ -153,3 +163,15 @@ You don't have to ever use `eject`. The curated feature set is suitable for smal
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).
+
+## Known Issues and Limitations
+
+### Removed Audio Features
+
+The application previously included audio features (danceability, energy, etc.) for tracks. This functionality has been removed as Spotify has deprecated the Audio Features API.
+
+### Web Playback SDK Requirements
+
+- The Web Playback SDK requires a Spotify Premium subscription (Free accounts can only use 30-second previews)
+- Mobile Spotify Premium accounts that don't include computer access may not work with the SDK
+- Some browser extensions related to privacy or content blocking may interfere with the SDK
