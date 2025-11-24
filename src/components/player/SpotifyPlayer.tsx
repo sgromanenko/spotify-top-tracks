@@ -475,17 +475,25 @@ const SpotifyPlayer = () => {
             </PlaceholderImage>
           )}
           <TrackInfo>
-            <TrackName>{track.name}</TrackName>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TrackName>{track.name}</TrackName>
+              <Button 
+                onClick={handleToggleSave}
+                aria-label={isSaved ? "Remove from Liked Songs" : "Save to Liked Songs"}
+                title={isSaved ? "Remove from Liked Songs" : "Save to Liked Songs"}
+                style={{ 
+                  color: isSaved ? '#1db954' : undefined,
+                  padding: 0,
+                  width: 'auto',
+                  height: 'auto',
+                  marginTop: '2px'
+                }}
+              >
+                <Heart size={16} fill={isSaved ? 'currentColor' : 'none'} />
+              </Button>
+            </div>
             <ArtistName>{artistNames}</ArtistName>
           </TrackInfo>
-          <Button 
-            onClick={handleToggleSave}
-            aria-label={isSaved ? "Remove from Liked Songs" : "Save to Liked Songs"}
-            title={isSaved ? "Remove from Liked Songs" : "Save to Liked Songs"}
-            style={{ color: isSaved ? '#1db954' : undefined }}
-          >
-            <Heart size={20} fill={isSaved ? 'currentColor' : 'none'} />
-          </Button>
         </NowPlaying>
 
         <MainControls>

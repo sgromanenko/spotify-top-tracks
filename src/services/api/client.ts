@@ -67,7 +67,15 @@ async function apiClient<T>({ method, endpoint, body, token }: ApiClientOptions)
       );
     }
 
-    return await response.json();
+    // Check if there's content to parse
+    const contentLength = response.headers.get('content-length');
+    if (contentLength === '0' || response.status === 204) {
+      return null as any;
+    }
+
+    // Try to parse JSON, but handle cases where it might be empty despite headers
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
   } catch (error) {
     // Re-throw error so caller can handle it
     throw error;
