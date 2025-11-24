@@ -1,7 +1,10 @@
 import React from 'react';
 import styled from 'styled-components';
 
+import { Navigate } from 'react-router-dom';
+
 import { Button } from '@/components';
+import { useAuth } from '../../../context/AuthContext';
 import { loginWithSpotify } from '../../../services/auth/spotifyAuth';
 
 const LoginContainer = styled.div`
@@ -35,7 +38,12 @@ const Subtitle = styled.p`
 `;
 
 const LoginPage: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const handleLogin = () => loginWithSpotify();
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <LoginContainer>
