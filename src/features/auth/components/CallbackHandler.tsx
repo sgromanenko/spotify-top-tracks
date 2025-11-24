@@ -3,76 +3,57 @@ import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import LoadingIndicator from '../../../components/common/LoadingIndicator';
-import { getAccessTokenFromHash, storeToken } from '../../../services/auth/spotifyAuth';
+import { exchangeToken } from '../../../services/auth/spotifyAuth';
+import { useAuth } from '../../../context/AuthContext';
 
 /**
  * This component handles the callback from Spotify after authorization.
- * It extracts the token from the URL hash, stores it, and redirects to the app.
+ * It exchanges the code for tokens and redirects to the app.
  */
 const CallbackHandler: React.FC = () => {
-  const { setToken, setUser } = useAuthStore();
+  const { refreshAuthState } = useAuth();
   const [isProcessed, setIsProcessed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Extract token from URL hash
-    const { token, expires_in } = getAccessTokenFromHash();
+    const handleCallback = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+      const storedState = localStorage.getItem('spotify_auth_state');
 
-    // Store token if it exists
-    if (token && expires_in) {
-      storeToken(token, expires_in);
-      console.log('Token successfully extracted and stored');
+      if (!code || !state || state !== storedState) {
+        console.error('Invalid state or missing code');
+        setError('Invalid authentication state');
+        setIsProcessed(true);
+        return;
+      }
 
-      // Update auth state in store
-      setToken(token);
-
-      // Fetch the current user's profile from Spotify and store it
-      (async () => {
-        try {
-          const res = await fetch('https://api.spotify.com/v1/me', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (!res.ok) throw new Error(`Failed to fetch profile: ${res.status}`);
-          const profile = await res.json();
-
-          setUser({
-            id: profile.id,
-            spotifyId: profile.id,
-            displayName: profile.display_name || profile.id,
-            email: profile.email || '',
-            profileImage: profile.images?.[0]?.url,
-            preferences: {
-              theme: 'dark',
-              language: 'en',
-              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-              privacy: {
-                profileVisibility: 'public',
-                listeningActivity: 'public',
-              },
-            },
-            statistics: {
-              totalListeningTime: 0,
-              totalTracksPlayed: 0,
-              favoriteGenres: [],
-              topArtists: [],
-              listeningStreak: 0,
-              averageSessionLength: 0,
-            },
-            createdAt: new Date(),
-            lastActive: new Date(),
-          });
-        } catch (e) {
-          console.warn('Could not load Spotify user profile:', e);
+      try {
+        const success = await exchangeToken(code);
+        
+        if (success) {
+          console.log('Token successfully exchanged');
+          // Trigger auth context update
+          await refreshAuthState();
+        } else {
+          setError('Failed to exchange token');
         }
-      })();
-    } else {
-      console.error('Failed to extract token from callback URL');
-    }
+      } catch (err) {
+        console.error('Error handling callback:', err);
+        setError('Authentication failed');
+      } finally {
+        setIsProcessed(true);
+      }
+    };
 
-    // Mark as processed after a short delay
-    setTimeout(() => {
-      setIsProcessed(true);
-    }, 500);
-  }, [setToken, setUser]);
+    handleCallback();
+  }, [refreshAuthState]);
+
+  if (error) {
+    // Redirect to login on error
+    return <Navigate to="/login" replace />;
+  }
 
   // Only redirect after we've handled the token
   if (!isProcessed) {
