@@ -1,8 +1,7 @@
 import React, { lazy, Suspense, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 
-import Button from '../../../components/common/Button';
-import Select from '../../../components/common/Select';
+import { Button, Select } from '@/components';
 import { useSpotify } from '../../../context/SpotifyContext';
 import { SpotifyTrack } from '../../../services/spotify';
 

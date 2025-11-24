@@ -4,7 +4,7 @@ import { Sliders, Play, Save, RefreshCw } from 'lucide-react';
 import { getRecommendations, createPlaylist, addTracksToPlaylist, SpotifyTrack, getTopTracks } from '../../../services/spotify';
 import { usePlayer } from '../../../context/PlayerContext';
 import { useAuth } from '../../../context/AuthContext';
-import Button from '../../../components/common/Button';
+import { Button } from '@/components';
 
 const Container = styled.div`
   display: flex;

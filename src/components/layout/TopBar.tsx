@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import Button from '../common/Button';
+import { Button } from '@/components';
 
 const TopBarContainer = styled.header`
   height: 64px;
@@ -113,7 +113,7 @@ const TopBar = () => {
           </Avatar>
           <UserName>{user?.displayName || 'User'}</UserName>
         </UserPill>
-        <Button onClick={logout} variant="secondary" size="small">
+        <Button onClick={logout} variant="secondary" size="sm">
           Logout
         </Button>
       </UserSection>

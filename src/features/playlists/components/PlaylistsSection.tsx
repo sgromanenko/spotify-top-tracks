@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
-import Button from '../../../components/common/Button';
+import { Button } from '@/components';
 import { getUserPlaylists, SpotifyPlaylist } from '../../../services/spotify';
 
 const Container = styled.div`

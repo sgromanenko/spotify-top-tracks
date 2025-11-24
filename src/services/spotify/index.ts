@@ -8,6 +8,15 @@ import type {
 } from '@/types';
 import type { RecommendationOptions } from '@/types/api';
 
+// Re-export types for backward compatibility
+export type {
+  SpotifyTrack,
+  SpotifyArtist,
+  SpotifyAlbum,
+  SpotifyPlaylist,
+  TimeRange,
+};
+
 /**
  * Fetches the user's top tracks from Spotify API
  * @param limit - Maximum number of tracks to return (1-50)

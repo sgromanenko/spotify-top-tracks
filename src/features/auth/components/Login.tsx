@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { getSpotifyAuth } from '../../../services/auth/spotifyAuth';
-import { refreshAccessToken } from '../../../services/auth/tokenRefresh';
 
 const Login: React.FC = () => {
   const handleLogin = async () => {
@@ -62,9 +61,6 @@ const Login: React.FC = () => {
       const data = await response.json();
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('refresh_token', data.refresh_token);
-
-      // Set up automatic token refresh
-      await refreshAccessToken();
 
       window.location.href = '/';
     } catch (error) {
