@@ -167,8 +167,8 @@ const Home = () => {
         <SectionTitle>Recently Played</SectionTitle>
         {isLoading ? renderSkeletons() : (
           <Grid>
-            {recentTracks.map((track) => (
-              <Card key={track.id} onClick={() => playTrack(`spotify:track:${track.id}`)}>
+            {recentTracks.map((track, index) => (
+              <Card key={`${track.id}-${index}`} onClick={() => playTrack(`spotify:track:${track.id}`)}>
               <CardImage>
                 <img src={track.album.images[0]?.url} alt={track.name} />
                 <PlayButton className="play-button" onClick={(e) => handlePlay(e, `spotify:track:${track.id}`)}>
