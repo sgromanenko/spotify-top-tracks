@@ -114,6 +114,17 @@ const ArtistName = styled.p`
   text-overflow: ellipsis;
 `;
 
+const PlaceholderImage = styled.div`
+  width: 48px;
+  height: 48px;
+  background-color: ${({ theme }) => theme.colors.background.elevated};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: ${({ theme }) => theme.borderRadius.small};
+  color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
 interface ToggleButtonProps {
   active: boolean;
 }
