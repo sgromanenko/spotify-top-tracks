@@ -352,3 +352,106 @@ export async function getTrackDetails(trackId: string): Promise<any> {
     throw error;
   }
 }
+/**
+ * Get artist details
+ * @param artistId - Spotify artist ID
+ */
+export async function getArtist(artistId: string): Promise<SpotifyArtist | null> {
+  try {
+    const response = await apiClient<SpotifyArtist>({
+      method: 'GET',
+      endpoint: `v1/artists/${artistId}`,
+    });
+    return response;
+  } catch (error) {
+    console.error('Error fetching artist:', error);
+    return null;
+  }
+}
+
+/**
+ * Get artist's top tracks
+ * @param artistId - Spotify artist ID
+ * @param market - Country code (default: US)
+ */
+export async function getArtistTopTracks(artistId: string, market = 'US'): Promise<SpotifyTrack[]> {
+  try {
+    const response = await apiClient<{ tracks: SpotifyTrack[] }>({
+      method: 'GET',
+      endpoint: `v1/artists/${artistId}/top-tracks?market=${market}`,
+    });
+    return response.tracks || [];
+  } catch (error) {
+    console.error('Error fetching artist top tracks:', error);
+    return [];
+  }
+}
+
+/**
+ * Get artist's albums
+ * @param artistId - Spotify artist ID
+ * @param limit - Max results
+ */
+export async function getArtistAlbums(artistId: string, limit = 20): Promise<SpotifyAlbum[]> {
+  try {
+    const response = await apiClient<{ items: SpotifyAlbum[] }>({
+      method: 'GET',
+      endpoint: `v1/artists/${artistId}/albums?include_groups=album,single&limit=${limit}`,
+    });
+    return response.items || [];
+  } catch (error) {
+    console.error('Error fetching artist albums:', error);
+    return [];
+  }
+}
+
+/**
+ * Get related artists
+ * @param artistId - Spotify artist ID
+ */
+export async function getArtistRelatedArtists(artistId: string): Promise<SpotifyArtist[]> {
+  try {
+    const response = await apiClient<{ artists: SpotifyArtist[] }>({
+      method: 'GET',
+      endpoint: `v1/artists/${artistId}/related-artists`,
+    });
+    return response.artists || [];
+  } catch (error) {
+    console.error('Error fetching related artists:', error);
+    return [];
+  }
+}
+
+/**
+ * Get album details
+ * @param albumId - Spotify album ID
+ */
+export async function getAlbum(albumId: string): Promise<SpotifyAlbum | null> {
+  try {
+    const response = await apiClient<SpotifyAlbum>({
+      method: 'GET',
+      endpoint: `v1/albums/${albumId}`,
+    });
+    return response;
+  } catch (error) {
+    console.error('Error fetching album:', error);
+    return null;
+  }
+}
+
+/**
+ * Get playlist details
+ * @param playlistId - Spotify playlist ID
+ */
+export async function getPlaylist(playlistId: string): Promise<SpotifyPlaylist | null> {
+  try {
+    const response = await apiClient<SpotifyPlaylist>({
+      method: 'GET',
+      endpoint: `v1/playlists/${playlistId}`,
+    });
+    return response;
+  } catch (error) {
+    console.error('Error fetching playlist:', error);
+    return null;
+  }
+}

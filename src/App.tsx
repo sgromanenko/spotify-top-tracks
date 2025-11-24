@@ -21,6 +21,9 @@ import { SpotifyProvider } from './context/SpotifyContext';
 // Lazy loaded components for code splitting
 const TopTracks = lazy(() => import('./features/tracks/components/TopTracks'));
 const PlaylistsSection = lazy(() => import('./features/playlists/components/PlaylistsSection'));
+const ArtistPage = lazy(() => import('./features/artist/components/ArtistPage'));
+const AlbumPage = lazy(() => import('./features/album/components/AlbumPage'));
+const PlaylistPage = lazy(() => import('./features/playlists/components/PlaylistPage'));
 
 const LoadingFallback = () => (
   <LoadingContainer>
@@ -92,6 +95,32 @@ function App() {
               <Route path="library" element={<Library />} />
               <Route path="mood-mix" element={<MoodMix />} />
               <Route path="stats" element={<Stats />} />
+              
+              {/* New Detail Pages */}
+              <Route
+                path="artist/:id"
+                element={
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ArtistPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="album/:id"
+                element={
+                  <Suspense fallback={<LoadingFallback />}>
+                    <AlbumPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="playlist/:id"
+                element={
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PlaylistPage />
+                  </Suspense>
+                }
+              />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

@@ -111,34 +111,15 @@ const CardSubtitle = styled.p`
   text-overflow: ellipsis;
 `;
 
+import { useNavigate } from 'react-router-dom';
+
+// ... (previous imports)
+
 const Home = () => {
-  const [recentTracks, setRecentTracks] = useState<SpotifyTrack[]>([]);
-  const [newReleases, setNewReleases] = useState<SpotifyAlbum[]>([]);
-  const [featuredPlaylists, setFeaturedPlaylists] = useState<SpotifyPlaylist[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { playTrack } = usePlayer();
+  const navigate = useNavigate();
+  // ... (state)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const [recent, releases, playlists] = await Promise.all([
-          getRecentlyPlayed(6),
-          getNewReleases(6),
-          getUserPlaylists(6)
-        ]);
-        setRecentTracks(recent);
-        setNewReleases(releases);
-        setFeaturedPlaylists(playlists);
-      } catch (error) {
-        console.error('Error fetching home data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  // ... (useEffect)
 
   const handlePlay = (e: React.MouseEvent, trackUri: string) => {
     e.stopPropagation();
@@ -146,19 +127,7 @@ const Home = () => {
   };
 
   const renderSkeletons = () => (
-    <Grid>
-      {[...Array(6)].map((_, i) => (
-        <Card key={i} style={{ cursor: 'default' }}>
-          <CardImage>
-            <Skeleton height="100%" borderRadius="0" />
-          </CardImage>
-          <div style={{ marginTop: '12px' }}>
-            <Skeleton width="70%" height="16px" style={{ marginBottom: '8px' }} />
-            <Skeleton width="40%" height="14px" />
-          </div>
-        </Card>
-      ))}
-    </Grid>
+    // ... (skeletons)
   );
 
   return (
@@ -188,9 +157,12 @@ const Home = () => {
         {isLoading ? renderSkeletons() : (
           <Grid>
             {newReleases.map((album) => (
-              <Card key={album.id}>
+              <Card key={album.id} onClick={() => navigate(`/album/${album.id}`)}>
                 <CardImage>
                   <img src={album.images[0]?.url} alt={album.name} />
+                  <PlayButton className="play-button" onClick={(e) => handlePlay(e, album.uri)}>
+                    <Play size={24} fill="currentColor" />
+                  </PlayButton>
                 </CardImage>
                 <CardTitle>{album.name}</CardTitle>
                 <CardSubtitle>{album.artists.map(a => a.name).join(', ')}</CardSubtitle>
@@ -206,7 +178,7 @@ const Home = () => {
           featuredPlaylists.length > 0 ? (
             <Grid>
               {featuredPlaylists.map((playlist) => (
-              <Card key={playlist.id}>
+              <Card key={playlist.id} onClick={() => navigate(`/playlist/${playlist.id}`)}>
                 <CardImage>
                   {playlist.images?.[0]?.url ? (
                     <img src={playlist.images[0].url} alt={playlist.name} />
@@ -215,6 +187,9 @@ const Home = () => {
                       <span style={{ fontSize: '2rem' }}>🎵</span>
                     </div>
                   )}
+                  <PlayButton className="play-button" onClick={(e) => handlePlay(e, playlist.uri)}>
+                    <Play size={24} fill="currentColor" />
+                  </PlayButton>
                 </CardImage>
                 <CardTitle>{playlist.name}</CardTitle>
                 <CardSubtitle>{playlist.owner.display_name}</CardSubtitle>

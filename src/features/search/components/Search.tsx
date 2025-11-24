@@ -152,38 +152,22 @@ const TrackName = styled.span`
   font-weight: ${({ theme }) => theme.typography.fontWeightMedium};
 `;
 
+import { useNavigate } from 'react-router-dom';
+
+// ... (previous imports)
+
 const Search = () => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<{
-    tracks?: { items: SpotifyTrack[] };
-    artists?: { items: SpotifyArtist[] };
-    albums?: { items: SpotifyAlbum[] };
-    playlists?: { items: SpotifyPlaylist[] };
-  }>({});
-  const { playTrack } = usePlayer();
+  // ... (state)
 
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(async () => {
-      if (query.trim()) {
-        const data = await search(query);
-        setResults(data);
-      } else {
-        setResults({});
-      }
-    }, 500);
+  // ... (useEffect)
 
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  const formatDuration = (ms: number) => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = ((ms % 60000) / 1000).toFixed(0);
-    return `${minutes}:${Number(seconds) < 10 ? '0' : ''}${seconds}`;
-  };
+  // ... (formatDuration)
 
   return (
     <SearchContainer>
+      {/* ... (SearchHeader) */}
       <SearchHeader>
         <SearchInputContainer>
           <SearchIconWrapper>
@@ -213,7 +197,12 @@ const Search = () => {
                     <div>{track.artists.map(a => a.name).join(', ')}</div>
                   </div>
                 </TrackInfo>
-                <span>{track.album.name}</span>
+                <span 
+                  style={{ cursor: 'pointer', textDecoration: 'underline' }} 
+                  onClick={(e) => { e.stopPropagation(); navigate(`/album/${track.album.id}`); }}
+                >
+                  {track.album.name}
+                </span>
                 <span>{formatDuration(track.duration_ms)}</span>
               </TrackRow>
             ))}
@@ -226,7 +215,7 @@ const Search = () => {
           <SectionTitle>Artists</SectionTitle>
           <Grid>
             {results.artists.items.slice(0, 6).map((artist: any) => (
-              <Card key={artist.id}>
+              <Card key={artist.id} onClick={() => navigate(`/artist/${artist.id}`)}>
                 <CardImage rounded>
                   <img src={artist.images?.[0]?.url || 'https://via.placeholder.com/150'} alt={artist.name} />
                 </CardImage>
@@ -243,7 +232,7 @@ const Search = () => {
           <SectionTitle>Albums</SectionTitle>
           <Grid>
             {results.albums.items.slice(0, 6).map((album) => (
-              <Card key={album.id}>
+              <Card key={album.id} onClick={() => navigate(`/album/${album.id}`)}>
                 <CardImage>
                   <img src={album.images[0]?.url} alt={album.name} />
                 </CardImage>
