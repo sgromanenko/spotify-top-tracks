@@ -276,3 +276,56 @@ export async function addTracksToPlaylist(playlistId: string, uris: string[]): P
     return false;
   }
 }
+/**
+ * Check if tracks are saved in the user's library
+ * @param ids - Array of track IDs
+ * @returns Promise that resolves to array of booleans
+ */
+export async function checkUserSavedTracks(ids: string[]): Promise<boolean[]> {
+  try {
+    const response = await apiClient<boolean[]>({
+      method: 'GET',
+      endpoint: `v1/me/tracks/contains?ids=${ids.join(',')}`,
+    });
+    return response || [];
+  } catch (error) {
+    console.error('Error checking saved tracks:', error);
+    return [];
+  }
+}
+
+/**
+ * Save tracks to the user's library
+ * @param ids - Array of track IDs
+ * @returns Promise that resolves to true if successful
+ */
+export async function saveTracksForUser(ids: string[]): Promise<boolean> {
+  try {
+    await apiClient({
+      method: 'PUT',
+      endpoint: `v1/me/tracks?ids=${ids.join(',')}`,
+    });
+    return true;
+  } catch (error) {
+    console.error('Error saving tracks:', error);
+    return false;
+  }
+}
+
+/**
+ * Remove tracks from the user's library
+ * @param ids - Array of track IDs
+ * @returns Promise that resolves to true if successful
+ */
+export async function removeTracksForUser(ids: string[]): Promise<boolean> {
+  try {
+    await apiClient({
+      method: 'DELETE',
+      endpoint: `v1/me/tracks?ids=${ids.join(',')}`,
+    });
+    return true;
+  } catch (error) {
+    console.error('Error removing tracks:', error);
+    return false;
+  }
+}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { Shuffle, Repeat, Repeat1, Monitor, Smartphone, Speaker, Music } from 'lucide-react';
+import { Shuffle, Repeat, Repeat1, Monitor, Smartphone, Speaker, Music, Heart } from 'lucide-react';
+import { checkUserSavedTracks, saveTracksForUser, removeTracksForUser } from '@/services/spotify';
 
 import { usePlayer } from '@/context/PlayerContext';
 
@@ -435,6 +436,33 @@ const SpotifyPlayer = () => {
   };
   const artistNames = track.artists.map((artist: any) => artist.name).join(', ');
 
+  // Check if track is saved
+  const [isSaved, setIsSaved] = useState(false);
+  const currentTrackId = playerState?.track_window?.current_track?.id;
+
+  useEffect(() => {
+    if (!currentTrackId) return;
+
+    const checkSaved = async () => {
+      const saved = await checkUserSavedTracks([currentTrackId]);
+      setIsSaved(saved[0] || false);
+    };
+
+    checkSaved();
+  }, [currentTrackId]);
+
+  const handleToggleSave = async () => {
+    if (!currentTrackId) return;
+
+    if (isSaved) {
+      const success = await removeTracksForUser([currentTrackId]);
+      if (success) setIsSaved(false);
+    } else {
+      const success = await saveTracksForUser([currentTrackId]);
+      if (success) setIsSaved(true);
+    }
+  };
+
   return (
     <PlayerContainer>
       <PlayerContent>
@@ -450,6 +478,14 @@ const SpotifyPlayer = () => {
             <TrackName>{track.name}</TrackName>
             <ArtistName>{artistNames}</ArtistName>
           </TrackInfo>
+          <Button 
+            onClick={handleToggleSave}
+            aria-label={isSaved ? "Remove from Liked Songs" : "Save to Liked Songs"}
+            title={isSaved ? "Remove from Liked Songs" : "Save to Liked Songs"}
+            style={{ color: isSaved ? '#1db954' : undefined }}
+          >
+            <Heart size={20} fill={isSaved ? 'currentColor' : 'none'} />
+          </Button>
         </NowPlaying>
 
         <MainControls>
