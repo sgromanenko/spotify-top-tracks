@@ -24,11 +24,11 @@ const MainContent = styled.div`
   overflow: hidden;
 `;
 
-const ContentArea = styled.main`
+const ContentArea = styled.main<{ hasPlayer: boolean }>`
   flex: 1;
   padding: ${({ theme }) => theme.space.xl};
   overflow-y: auto;
-  height: calc(100vh - 64px - 95px); /* viewport - topbar - player */
+  height: ${({ hasPlayer }) => (hasPlayer ? 'calc(100vh - 64px - 95px)' : 'calc(100vh - 64px)')};
 `;
 
 const PlayerArea = styled.div`
@@ -37,20 +37,23 @@ const PlayerArea = styled.div`
 `;
 
 const MainLayout: React.FC = () => {
-  const { isReady } = usePlayer();
-  const showPlayer = isReady;
+  const { isReady, playerState } = usePlayer();
+  // Show player only if ready AND has a current track
+  const showPlayer = isReady && !!playerState?.track_window?.current_track;
 
   return (
     <AppContainer>
       <Sidebar />
       <MainContent>
         <TopBar />
-        <ContentArea>
+        <ContentArea hasPlayer={showPlayer}>
           <Outlet />
         </ContentArea>
-        <PlayerArea>
-          <SpotifyPlayer />
-        </PlayerArea>
+        {showPlayer && (
+          <PlayerArea>
+            <SpotifyPlayer />
+          </PlayerArea>
+        )}
       </MainContent>
     </AppContainer>
   );

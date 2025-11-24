@@ -433,22 +433,12 @@ const SpotifyPlayer = () => {
     seekToPosition(newPosition);
   };
 
-  if (!isReady) {
-    return (
-      <PlayerContainer>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '0.875rem', color: '#B3B3B3' }}>
-          {localError ? <ErrorMessage>{localError}</ErrorMessage> : <span>Initializing Spotify Player...</span>}
-        </div>
-      </PlayerContainer>
-    );
+  if (!isReady || !playerState) {
+    return null;
   }
 
-  // Default values when no track is playing
-  const track = playerState?.track_window?.current_track || {
-    name: 'Ready to Play',
-    artists: [{ name: 'Select a track' }],
-    album: { name: 'No Album', images: [] }
-  };
+  // Track is guaranteed to exist because of the check above and in MainLayout
+  const track = playerState.track_window.current_track;
   const artistNames = track.artists.map((artist: any) => artist.name).join(', ');
 
   const handleToggleSave = async () => {
