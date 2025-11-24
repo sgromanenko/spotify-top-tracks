@@ -93,6 +93,22 @@ export const loginWithSpotify = async (): Promise<void> => {
 /**
  * Exchanges authorization code for access and refresh tokens using PKCE
  */
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  scope: string;
+  expires_in: number;
+  refresh_token?: string;
+}
+
+interface AuthError {
+  error: string;
+  error_description: string;
+}
+
+/**
+ * Exchanges authorization code for access and refresh tokens using PKCE
+ */
 export const exchangeToken = async (code: string): Promise<boolean> => {
   if (!CLIENT_ID) {
     console.error('Missing client ID');
@@ -121,13 +137,14 @@ export const exchangeToken = async (code: string): Promise<boolean> => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json() as AuthError;
       console.error('Token exchange failed:', errorData);
-      throw new Error('Failed to exchange code for token');
+      throw new Error(errorData.error_description || 'Failed to exchange code for token');
     }
 
-    const data = await response.json();
-    storeTokens(data.access_token, data.refresh_token, data.expires_in);
+    const data = await response.json() as TokenResponse;
+    // We might not get a refresh token if the scope hasn't changed, but for auth code flow we usually do
+    storeTokens(data.access_token, data.refresh_token || '', data.expires_in);
     
     // Clean up verifier
     localStorage.removeItem(KEYS.CODE_VERIFIER);
@@ -162,18 +179,23 @@ export const refreshAccessToken = async (): Promise<string | null> => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to refresh token');
+      const errorData = await response.json() as AuthError;
+      console.error('Token refresh failed:', errorData);
+      throw new Error(errorData.error_description || 'Failed to refresh token');
     }
 
-    const data = await response.json();
+    const data = await response.json() as TokenResponse;
     
     // Update access token and expiration
+    // Refresh token might not be returned if it hasn't changed
     const newRefreshToken = data.refresh_token || refreshToken;
     storeTokens(data.access_token, newRefreshToken, data.expires_in);
     
     return data.access_token;
   } catch (error) {
     console.error('Token refresh error:', error);
+    // Only clear tokens if it's a fatal error (like invalid_grant), not network error
+    // For now, we'll keep the existing behavior but it's worth noting
     clearStoredToken();
     return null;
   }
