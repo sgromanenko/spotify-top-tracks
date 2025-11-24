@@ -82,8 +82,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Initialize the player
   useEffect(() => {
     let localPlayer: any = null;
+    let isMounted = true;
 
     const setupPlayer = () => {
+      if (!isMounted) return;
+      
       if (!token || !window.Spotify || !window.Spotify.PlayerSDKReady) {
         return;
       }
@@ -96,27 +99,32 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Error handling
       spotifyPlayer.addListener('initialization_error', ({ message }: { message: string }) => {
+        if (!isMounted) return;
         console.error('Initialization error:', message);
         setError(`Player initialization failed: ${message}`);
       });
 
       spotifyPlayer.addListener('authentication_error', ({ message }: { message: string }) => {
+        if (!isMounted) return;
         console.error('Authentication error:', message);
         setError(`Authentication failed: ${message}`);
       });
 
       spotifyPlayer.addListener('account_error', ({ message }: { message: string }) => {
+        if (!isMounted) return;
         console.error('Account error:', message);
         setError(`Account error: ${message}. Premium account is required.`);
       });
 
       spotifyPlayer.addListener('playback_error', ({ message }: { message: string }) => {
+        if (!isMounted) return;
         console.error('Playback error:', message);
         setError(`Playback error: ${message}`);
       });
 
       // Ready event
       spotifyPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
+        if (!isMounted) return;
         console.log('Ready with Device ID', device_id);
         setDeviceId(device_id);
         setIsReady(true);
@@ -124,6 +132,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         
         // Auto-transfer playback to this device to make it active
         const transferPlayback = async (retries = 3) => {
+          if (!isMounted) return;
           try {
              await fetch(`https://api.spotify.com/v1/me/player`, {
               method: 'PUT',
@@ -136,7 +145,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             console.log('Playback transferred successfully');
           } catch (e) {
             console.error('Failed to transfer playback:', e);
-            if (retries > 0) {
+            if (retries > 0 && isMounted) {
               console.log(`Retrying transfer playback (${retries} retries left)...`);
               setTimeout(() => transferPlayback(retries - 1), 1000);
             }
@@ -148,12 +157,14 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Not ready event
       spotifyPlayer.addListener('not_ready', ({ device_id }: { device_id: string }) => {
+        if (!isMounted) return;
         console.log('Device ID has gone offline', device_id);
         setIsReady(false);
       });
 
       // Player state changed
       spotifyPlayer.addListener('player_state_changed', (state: PlayerState) => {
+        if (!isMounted) return;
         if (!state) {
           console.log('No player state available');
           return;
@@ -168,6 +179,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       spotifyPlayer
         .connect()
         .then((success: boolean) => {
+          if (!isMounted) return;
           if (success) {
             console.log('The Web Playback SDK successfully connected to Spotify!');
           } else {
@@ -176,12 +188,17 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
         })
         .catch((err: Error) => {
+          if (!isMounted) return;
           console.error('Error connecting to Spotify:', err);
           setError(`Connection error: ${err.message}`);
         });
 
-      setPlayer(spotifyPlayer);
-      localPlayer = spotifyPlayer;
+      if (isMounted) {
+        setPlayer(spotifyPlayer);
+        localPlayer = spotifyPlayer;
+      } else {
+        spotifyPlayer.disconnect();
+      }
     };
 
     // Wait for SDK to be ready
@@ -195,6 +212,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     return () => {
+      isMounted = false;
       if (localPlayer) {
         localPlayer.disconnect();
       }
