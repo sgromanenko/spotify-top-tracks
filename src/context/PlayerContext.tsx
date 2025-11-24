@@ -81,6 +81,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Initialize the player
   useEffect(() => {
+    let localPlayer: any = null;
+
     const setupPlayer = () => {
       if (!token || !window.Spotify || !window.Spotify.PlayerSDKReady) {
         return;
@@ -179,11 +181,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         });
 
       setPlayer(spotifyPlayer);
-
-      // Cleanup
-      return () => {
-        spotifyPlayer.disconnect();
-      };
+      localPlayer = spotifyPlayer;
     };
 
     // Wait for SDK to be ready
@@ -197,8 +195,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     return () => {
-      if (player) {
-        player.disconnect();
+      if (localPlayer) {
+        localPlayer.disconnect();
       }
     };
   }, [token]);
