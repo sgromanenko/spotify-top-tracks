@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Play } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { getRecentlyPlayed, getNewReleases, getUserPlaylists, SpotifyTrack, SpotifyAlbum, SpotifyPlaylist } from '../../../services/spotify';
 import { usePlayer } from '../../../context/PlayerContext';
 import Skeleton from '../../../components/ui/Skeleton';
@@ -111,15 +112,35 @@ const CardSubtitle = styled.p`
   text-overflow: ellipsis;
 `;
 
-import { useNavigate } from 'react-router-dom';
-
-// ... (previous imports)
-
 const Home = () => {
   const navigate = useNavigate();
-  // ... (state)
+  const [recentTracks, setRecentTracks] = useState<SpotifyTrack[]>([]);
+  const [newReleases, setNewReleases] = useState<SpotifyAlbum[]>([]);
+  const [featuredPlaylists, setFeaturedPlaylists] = useState<SpotifyPlaylist[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { playTrack } = usePlayer();
 
-  // ... (useEffect)
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [recent, releases, playlists] = await Promise.all([
+          getRecentlyPlayed(6),
+          getNewReleases(6),
+          getUserPlaylists(6)
+        ]);
+        setRecentTracks(recent);
+        setNewReleases(releases);
+        setFeaturedPlaylists(playlists);
+      } catch (error) {
+        console.error('Error fetching home data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handlePlay = (e: React.MouseEvent, trackUri: string) => {
     e.stopPropagation();
@@ -127,7 +148,19 @@ const Home = () => {
   };
 
   const renderSkeletons = () => (
-    // ... (skeletons)
+    <Grid>
+      {[...Array(6)].map((_, i) => (
+        <Card key={i} style={{ cursor: 'default' }}>
+          <CardImage>
+            <Skeleton height="100%" borderRadius="0" />
+          </CardImage>
+          <div style={{ marginTop: '12px' }}>
+            <Skeleton width="70%" height="16px" style={{ marginBottom: '8px' }} />
+            <Skeleton width="40%" height="14px" />
+          </div>
+        </Card>
+      ))}
+    </Grid>
   );
 
   return (

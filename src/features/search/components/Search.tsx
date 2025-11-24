@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Search as SearchIcon, Play, Clock } from 'lucide-react';
+import { Search as SearchIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { search, SpotifyTrack, SpotifyArtist, SpotifyAlbum, SpotifyPlaylist } from '../../../services/spotify';
 import { usePlayer } from '../../../context/PlayerContext';
 
@@ -152,22 +153,39 @@ const TrackName = styled.span`
   font-weight: ${({ theme }) => theme.typography.fontWeightMedium};
 `;
 
-import { useNavigate } from 'react-router-dom';
-
-// ... (previous imports)
-
 const Search = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
-  // ... (state)
+  const [results, setResults] = useState<{
+    tracks?: { items: SpotifyTrack[] };
+    artists?: { items: SpotifyArtist[] };
+    albums?: { items: SpotifyAlbum[] };
+    playlists?: { items: SpotifyPlaylist[] };
+  }>({});
+  const { playTrack } = usePlayer();
 
-  // ... (useEffect)
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (query.trim()) {
+        const data = await search(query);
+        setResults(data);
+      } else {
+        setResults({});
+      }
+    }, 500);
 
-  // ... (formatDuration)
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const formatDuration = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = ((ms % 60000) / 1000).toFixed(0);
+    return `${minutes}:${Number(seconds) < 10 ? '0' : ''}${seconds}`;
+  };
 
   return (
     <SearchContainer>
-      {/* ... (SearchHeader) */}
       <SearchHeader>
         <SearchInputContainer>
           <SearchIconWrapper>
