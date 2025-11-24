@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { Shuffle, Repeat, Repeat1, Monitor, Smartphone, Speaker, Music } from 'lucide-react';
 
 import { usePlayer } from '@/context/PlayerContext';
 
@@ -15,42 +16,37 @@ interface SpotifyDevice {
 }
 
 const PlayerContainer = styled.div`
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.85));
+  backdrop-filter: blur(20px);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.75rem 1rem 1rem;
+  padding: 0.75rem 1.5rem;
   display: flex;
   flex-direction: column;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
-  height: 110px;
+  gap: 0.5rem;
+  height: 95px;
+  width: 100%;
 `;
 
 const PlayerContent = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr auto 1fr;
   width: 100%;
   align-items: center;
-  margin-bottom: 0.5rem;
+  gap: 1rem;
 `;
 
 const NowPlaying = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  max-width: 100%;
-  overflow: hidden;
+  min-width: 0;
 `;
 
 const MainControls = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: 0.75rem;
 `;
 
 const SecondaryControls = styled.div`
@@ -64,30 +60,30 @@ const Button = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: 1.2rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
+  padding: 0.4rem;
   border-radius: 50%;
   transition: all 0.2s;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
 
   &:hover {
+    color: ${({ theme }) => theme.colors.text.primary};
     background-color: rgba(255, 255, 255, 0.1);
   }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.3;
     cursor: not-allowed;
   }
 `;
 
 const AlbumArt = styled.img`
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   border-radius: ${({ theme }) => theme.borderRadius.small};
   box-shadow: ${({ theme }) => theme.shadows.small};
 `;
@@ -96,6 +92,7 @@ const TrackInfo = styled.div`
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
 `;
 
 const TrackName = styled.h3`
@@ -105,6 +102,7 @@ const TrackName = styled.h3`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const ArtistName = styled.p`
@@ -121,42 +119,55 @@ interface ToggleButtonProps {
 }
 
 const ToggleButton = styled(Button)<ToggleButtonProps>`
-  color: ${({ theme, active }) => (active ? theme.colors.primary.main : theme.colors.text.primary)};
-  font-size: 1.2rem;
+  color: ${({ theme, active }) => (active ? theme.colors.primary.main : theme.colors.text.secondary)};
+  
+  &:hover {
+    color: ${({ theme, active }) => (active ? theme.colors.primary.light : theme.colors.text.primary)};
+  }
 `;
 
 const ProgressContainer = styled.div`
   width: 100%;
   height: 4px;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.4);
   border-radius: 2px;
   position: relative;
   cursor: pointer;
+  overflow: hidden;
+  
+  &:hover {
+    height: 6px;
+  }
 `;
 
 const Progress = styled.div<{ width: number }>`
   position: absolute;
   height: 100%;
-  background-color: ${({ theme }) => theme.colors.primary.main};
+  background: linear-gradient(90deg, #1ed760, #1db954);
   border-radius: 2px;
   width: ${props => props.width}%;
+  transition: width 0.1s linear;
 `;
 
 const ErrorMessage = styled.div`
   color: ${({ theme }) => theme.colors.error.main};
   text-align: center;
-  font-size: 0.75rem;
-  padding: 0.5rem;
+  font-size: 0.7rem;
+  padding: 0.25rem;
 `;
 
-const PlayerStatus = styled.div`
+const TimeText = styled.span`
+  font-size: 0.7rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+`;
+
+const ProgressSection = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin-top: 0.4rem;
-  padding: 0 0.25rem;
+  gap: 0.75rem;
+  width: 100%;
 `;
 
 const DeviceSelector = styled.div`
@@ -164,40 +175,34 @@ const DeviceSelector = styled.div`
   display: inline-block;
 `;
 
-const DeviceButton = styled(Button)`
-  font-size: 1rem;
-`;
+const DeviceButton = styled(Button)``;
 
 const DeviceDropdown = styled.div`
   position: absolute;
   bottom: 100%;
   right: 0;
   background-color: ${({ theme }) => theme.colors.background.paper};
-  min-width: 200px;
+  min-width: 220px;
   border-radius: ${({ theme }) => theme.borderRadius.medium};
-  box-shadow: ${({ theme }) => theme.shadows.medium};
+  box-shadow: ${({ theme }) => theme.shadows.large};
   padding: 0.5rem 0;
   z-index: 10;
   margin-bottom: 0.5rem;
 `;
 
 const DeviceItem = styled.div<{ isActive: boolean }>`
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.75rem;
   background-color: ${({ isActive, theme }) =>
     isActive ? theme.colors.background.elevated : 'transparent'};
+  color: ${({ theme }) => theme.colors.text.primary};
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.background.elevated};
   }
-`;
-
-const DeviceIcon = styled.span`
-  margin-right: 0.5rem;
-  font-size: 0.9rem;
 `;
 
 const DeviceName = styled.span`
@@ -206,16 +211,15 @@ const DeviceName = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 `;
 
 const ActiveBadge = styled.span`
   font-size: 0.7rem;
   background-color: ${({ theme }) => theme.colors.primary.main};
   color: white;
-  padding: 0.2rem 0.4rem;
+  padding: 0.2rem 0.5rem;
   border-radius: ${({ theme }) => theme.borderRadius.pill};
-  margin-left: 0.5rem;
 `;
 
 // Vector icon wrapper
@@ -229,9 +233,9 @@ const Icon = styled.svg`
 const ControlButton = styled.button<{ disabled?: boolean }>`
   background: none;
   border: none;
-  color: ${({ disabled }) => (disabled ? '#B3B3B3' : '#FFFFFF')};
+  color: ${({ disabled }) => (disabled ? '#6B7280' : '#FFFFFF')};
   cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
-  opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
+  opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
   padding: 8px;
   border-radius: 50%;
   display: flex;
@@ -241,6 +245,7 @@ const ControlButton = styled.button<{ disabled?: boolean }>`
 
   &:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
   }
 
   &:disabled {
@@ -248,175 +253,115 @@ const ControlButton = styled.button<{ disabled?: boolean }>`
   }
 
   &:focus {
-    outline: 2px solid #1db954;
-    outline-offset: 2px;
-  }
-
-  &:focus:not(:focus-visible) {
     outline: none;
   }
 `;
 
-// Primary play/pause button
+// Primary play button
 const PrimaryButton = styled(ControlButton)`
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   background: #1db954;
   color: #000;
-  box-shadow: 0 8px 24px rgba(29, 185, 84, 0.35);
-  transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3);
+  transition: all 0.15s ease;
 
   &:hover:not(:disabled) {
     background: #1ed760;
-    transform: scale(1.03);
-    box-shadow: 0 10px 28px rgba(29, 185, 84, 0.45);
+    transform: scale(1.06);
+    box-shadow: 0 6px 16px rgba(29, 185, 84, 0.4);
   }
 
   &:active:not(:disabled) {
-    transform: scale(0.98);
+    transform: scale(0.96);
   }
 `;
 
-// Format time in MM:SS, format differently when duration is 0
-const formatTime = (ms: number): string => {
-  if (ms === 0) return '0:00';
-
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-};
-
-// Get next repeat mode
-const getNextRepeatMode = (currentMode: string): 'off' | 'context' | 'track' => {
-  switch (currentMode) {
-    case 'off':
-      return 'context';
-    case 'context':
-      return 'track';
-    case 'track':
-    default:
-      return 'off';
-  }
-};
-
-const SpotifyPlayer: React.FC = () => {
+const SpotifyPlayer = () => {
   const {
     playerState,
     isReady,
     isPlaying,
-    error,
     togglePlay,
     previousTrack,
     nextTrack,
-    toggleShuffle,
-    setRepeatMode,
-    repeatMode,
-    shuffleState,
     seekToPosition,
+    error,
+    shuffleState,
+    toggleShuffle,
+    repeatMode,
+    setRepeatMode,
     getAvailableDevices,
     transferPlayback,
-    deviceId: currentDeviceId,
   } = usePlayer();
-  
-  const [progress, setProgress] = useState<number>(0);
-  const [progressMs, setProgressMs] = useState<number>(0);
-  const [duration, setDuration] = useState<number>(0);
-  const [devices, setDevices] = useState<SpotifyDevice[]>([]);
-  const [showDeviceSelector, setShowDeviceSelector] = useState<boolean>(false);
+
   const [localError, setLocalError] = useState<string | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
+  const [progressMs, setProgressMs] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [seekPosition, setSeekPosition] = useState(0);
+  const [devices, setDevices] = useState<SpotifyDevice[]>([]);
+  const [showDeviceSelector, setShowDeviceSelector] = useState(false);
 
-  console.log('[SpotifyPlayer] Render - isReady:', isReady, 'playerState:', !!playerState);
-
-  const currentTrack = playerState?.track_window?.current_track;
-  const disallows = playerState?.disallows || {
-    pausing: false,
-    peeking_next: false,
-    peeking_prev: false,
-    resuming: false,
-    seeking: false,
-    skipping_next: false,
-    skipping_prev: false,
-  };
-
-  // Determine if next/previous buttons should be disabled
-  const isNextDisabled = disallows.skipping_next || !playerState?.track_window?.next_tracks?.length;
-  const isPrevDisabled =
-    disallows.skipping_prev || !playerState?.track_window?.previous_tracks?.length;
-
-  // Update progress periodically when playing
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-
-    if (isPlaying) {
-      interval = setInterval(() => {
-        if (playerState) {
-          const newProgress = Math.min(progressMs + 1000, playerState.duration);
-          setProgressMs(newProgress);
-          setProgress((newProgress / playerState.duration) * 100);
-        }
-      }, 1000);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isPlaying, playerState, progressMs]);
-
-  // Reset progress when track changes
-  useEffect(() => {
-    if (playerState) {
-      setProgressMs(playerState.position);
-      setProgress((playerState.position / playerState.duration) * 100);
-      setDuration(playerState.duration);
-      // Clear any local errors when track changes successfully
-      setLocalError(null);
-    }
-  }, [playerState]);
-
-  // Only show transient errors for a short time
+  // Sync error from context
   useEffect(() => {
     if (error) {
       setLocalError(error);
-      const timer = setTimeout(() => {
-        setLocalError(null);
-      }, 3000);
+      const timer = setTimeout(() => setLocalError(null), 5000);
       return () => clearTimeout(timer);
     }
   }, [error]);
 
-  // Fetch available devices when dropdown is opened
-  const handleDeviceSelectorClick = async () => {
-    if (!showDeviceSelector) {
-      const availableDevices = await getAvailableDevices();
-      setDevices(availableDevices);
-    }
-    setShowDeviceSelector(!showDeviceSelector);
-  };
-
-  // Handle device selection
-  const handleDeviceSelect = async (deviceId: string) => {
-    if (deviceId !== currentDeviceId) {
-      await transferPlayback(deviceId);
-    }
-    setShowDeviceSelector(false);
-  };
-
-  // Close device selector when clicking outside
+  // Update progress from player state
   useEffect(() => {
-    const handleClickOutside = () => {
-      setShowDeviceSelector(false);
-    };
-
-    if (showDeviceSelector) {
-      document.addEventListener('click', handleClickOutside);
+    if (playerState) {
+      setProgressMs(playerState.position);
+      setDuration(playerState.duration);
     }
+  }, [playerState]);
 
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [showDeviceSelector]);
+  // Progress animation when playing
+  useEffect(() => {
+    if (!isPlaying || !duration) return;
+
+    const interval = setInterval(() => {
+      setProgressMs(prev => {
+        const next = prev + 1000;
+        return next >= duration ? duration : next;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, duration]);
+
+  const progress = duration > 0 ? (progressMs / duration) * 100 : 0;
+
+  const formatTime = (ms: number): string => {
+    if (ms === 0) return '0:00';
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Check if previous/next should be disabled
+  const isPrevDisabled = !playerState?.track_window?.previous_tracks?.length;
+  const isNextDisabled = !playerState?.track_window?.next_tracks?.length;
+
+  // Handle device selector
+  const handleDeviceSelectorClick = async () => {
+    setShowDeviceSelector(!showDeviceSelector);
+    if (!showDeviceSelector && getAvailableDevices) {
+      const devices = await getAvailableDevices();
+      setDevices(devices);
+    }
+  };
+
+  const handleDeviceSelect = async (deviceId: string) => {
+    if (transferPlayback) {
+      await transferPlayback(deviceId);
+      setShowDeviceSelector(false);
+    }
+  };
 
   // Handle repeat mode toggle
   const handleRepeatToggle = () => {
@@ -428,27 +373,43 @@ const SpotifyPlayer: React.FC = () => {
     setRepeatMode(nextMode);
   };
 
-  // Handle seek on progress bar click
+  // Get repeat icon based on mode
+  const getRepeatIcon = () => {
+    if (repeatMode === 'track') {
+      return <Repeat1 size={18} />;
+    }
+    return <Repeat size={18} />;
+  };
+
+  // Get device icon based on type
+  const getDeviceIcon = (type: string) => {
+    const iconSize = 16;
+    switch (type.toLowerCase()) {
+      case 'computer':
+        return <Monitor size={iconSize} />;
+      case 'smartphone':
+        return <Smartphone size={iconSize} />;
+      case 'speaker':
+        return <Speaker size={iconSize} />;
+      default:
+        return <Music size={iconSize} />;
+    }
+  };
+
+  // Handle progress bar click
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!playerState || !isReady) return;
-
-    const progressBar = e.currentTarget;
-    const rect = progressBar.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const percentage = offsetX / rect.width;
-
-    const seekPosition = Math.floor(playerState.duration * percentage);
-    setProgressMs(seekPosition);
-    setProgress(percentage * 100);
-
-    // Call the seekToPosition function from PlayerContext
-    seekToPosition(seekPosition);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = x / rect.width;
+    const newPosition = Math.floor(duration * percentage);
+    setSeekPosition(newPosition);
+    seekToPosition(newPosition);
   };
 
   if (!isReady) {
     return (
       <PlayerContainer>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '0.9rem', color: '#B3B3B3' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '0.875rem', color: '#B3B3B3' }}>
           {localError ? <ErrorMessage>{localError}</ErrorMessage> : <span>Initializing Spotify Player...</span>}
         </div>
       </PlayerContainer>
@@ -461,27 +422,14 @@ const SpotifyPlayer: React.FC = () => {
     artists: [{ name: 'Select a track' }],
     album: { name: 'No Album', images: [] }
   };
-  const albumImage = track.album.images[0]?.url || 'https://via.placeholder.com/42';
+  const albumImage = track.album.images[0]?.url || 'https://via.placeholder.com/48';
   const artistNames = track.artists.map((artist: any) => artist.name).join(', ');
-
-  // Get repeat icon based on current mode
-  const getRepeatIcon = () => {
-    switch (repeatMode) {
-      case 'track':
-        return '🔂'; // Repeat one
-      case 'context':
-        return '🔁'; // Repeat all
-      case 'off':
-      default:
-        return '🔁'; // Repeat off (same icon, but not highlighted)
-    }
-  };
 
   return (
     <PlayerContainer>
       <PlayerContent>
         <NowPlaying>
-          <AlbumArt src={albumImage} alt={`Album cover for ${track.album.name}`} />
+          <AlbumArt src={albumImage} alt={track.name} />
           <TrackInfo>
             <TrackName>{track.name}</TrackName>
             <ArtistName>{artistNames}</ArtistName>
@@ -496,34 +444,34 @@ const SpotifyPlayer: React.FC = () => {
             title={isPrevDisabled ? 'No previous tracks' : 'Previous track'}
           >
             <Icon viewBox="0 0 24 24" aria-hidden="true">
-              <path fill="currentColor" d="M6 5h2v14H6V5zm3.5 7L20 19V5l-10.5 7z" />
+              <path fill="currentColor" d="M6 19h2V5H6v14zM9.5 12L20 5v14l-10.5-7z" />
             </Icon>
           </ControlButton>
           <PrimaryButton
-              onClick={togglePlay}
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-              title={isPlaying ? 'Pause' : 'Play'}
-            >
-              {isPlaying ? (
-                <Icon viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="#000" d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                </Icon>
-              ) : (
-                <Icon viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="#000" d="M8 5v14l11-7L8 5z" />
-                </Icon>
-              )}
-            </PrimaryButton>
-            <ControlButton
-              onClick={nextTrack}
-              disabled={isNextDisabled}
-              aria-label="Next track"
-              title={isNextDisabled ? 'No next tracks' : 'Next track'}
-            >
+            onClick={togglePlay}
+            aria-label={isPlaying ? 'Pause' : 'Play'}
+            title={isPlaying ? 'Pause' : 'Play'}
+          >
+            {isPlaying ? (
               <Icon viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="currentColor" d="M18 19h-2V5h2v14zM4 19l10.5-7L4 5v14z" />
+                <path fill="#000" d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
               </Icon>
-            </ControlButton>
+            ) : (
+              <Icon viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#000" d="M8 5v14l11-7L8 5z" />
+              </Icon>
+            )}
+          </PrimaryButton>
+          <ControlButton
+            onClick={nextTrack}
+            disabled={isNextDisabled}
+            aria-label="Next track"
+            title={isNextDisabled ? 'No next tracks' : 'Next track'}
+          >
+            <Icon viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M18 19h-2V5h2v14zM4 19l10.5-7L4 5v14z" />
+            </Icon>
+          </ControlButton>
         </MainControls>
 
         <SecondaryControls>
@@ -533,7 +481,7 @@ const SpotifyPlayer: React.FC = () => {
             aria-label={shuffleState ? 'Disable shuffle' : 'Enable shuffle'}
             title={shuffleState ? 'Disable shuffle' : 'Enable shuffle'}
           >
-            🔀
+            <Shuffle size={18} />
           </ToggleButton>
           <ToggleButton
             onClick={handleRepeatToggle}
@@ -550,7 +498,7 @@ const SpotifyPlayer: React.FC = () => {
               aria-label="Select playback device"
               title="Select playback device"
             >
-              📱
+              <Monitor size={18} />
             </DeviceButton>
 
             {showDeviceSelector && (
@@ -566,15 +514,7 @@ const SpotifyPlayer: React.FC = () => {
                       isActive={device.is_active}
                       onClick={() => handleDeviceSelect(device.id)}
                     >
-                      <DeviceIcon>
-                        {device.type === 'Computer'
-                          ? '💻'
-                          : device.type === 'Smartphone'
-                            ? '📱'
-                            : device.type === 'Speaker'
-                              ? '🔊'
-                              : '🎵'}
-                      </DeviceIcon>
+                      {getDeviceIcon(device.type)}
                       <DeviceName>{device.name}</DeviceName>
                       {device.is_active && <ActiveBadge>Active</ActiveBadge>}
                     </DeviceItem>
@@ -586,14 +526,13 @@ const SpotifyPlayer: React.FC = () => {
         </SecondaryControls>
       </PlayerContent>
 
-      <ProgressContainer onClick={handleProgressClick}>
-        <Progress width={progress} />
-      </ProgressContainer>
-
-      <PlayerStatus>
-        <span>{formatTime(progressMs)}</span>
-        <span>{formatTime(duration)}</span>
-      </PlayerStatus>
+      <ProgressSection>
+        <TimeText>{formatTime(progressMs)}</TimeText>
+        <ProgressContainer onClick={handleProgressClick}>
+          <Progress width={progress} />
+        </ProgressContainer>
+        <TimeText>{formatTime(duration)}</TimeText>
+      </ProgressSection>
 
       {localError && <ErrorMessage>{localError}</ErrorMessage>}
     </PlayerContainer>

@@ -9,9 +9,10 @@ import TopBar from './TopBar';
 
 const AppContainer = styled.div`
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   background: ${({ theme }) => theme.gradients.dark};
   color: ${({ theme }) => theme.colors.text.primary};
+  overflow: hidden;
 `;
 
 const MainContent = styled.div`
@@ -19,20 +20,24 @@ const MainContent = styled.div`
   margin-left: 240px; /* Match sidebar width */
   display: flex;
   flex-direction: column;
-  position: relative;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 `;
 
 const ContentArea = styled.main`
   flex: 1;
   padding: ${({ theme }) => theme.space.xl};
-  padding-bottom: 100px; /* Space for player */
+  overflow-y: auto;
+  height: calc(100vh - 64px - 95px); /* viewport - topbar - player */
+`;
+
+const PlayerArea = styled.div`
+  height: 95px;
+  flex-shrink: 0;
 `;
 
 const MainLayout: React.FC = () => {
   const { isReady } = usePlayer();
-  // Always show player if it's ready (initialized), even if no track is playing yet
-  // The SpotifyPlayer component handles the "empty" state
   const showPlayer = isReady;
 
   return (
@@ -43,7 +48,11 @@ const MainLayout: React.FC = () => {
         <ContentArea>
           <Outlet />
         </ContentArea>
-        {showPlayer && <SpotifyPlayer />}
+        {showPlayer && (
+          <PlayerArea>
+            <SpotifyPlayer />
+          </PlayerArea>
+        )}
       </MainContent>
     </AppContainer>
   );
