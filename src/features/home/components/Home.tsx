@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Play } from 'lucide-react';
 import { getRecentlyPlayed, getNewReleases, getUserPlaylists, SpotifyTrack, SpotifyAlbum, SpotifyPlaylist } from '../../../services/spotify';
 import { usePlayer } from '../../../context/PlayerContext';
+import Skeleton from '../../../components/ui/Skeleton';
 
 const HomeContainer = styled.div`
   display: flex;
@@ -114,18 +115,26 @@ const Home = () => {
   const [recentTracks, setRecentTracks] = useState<SpotifyTrack[]>([]);
   const [newReleases, setNewReleases] = useState<SpotifyAlbum[]>([]);
   const [featuredPlaylists, setFeaturedPlaylists] = useState<SpotifyPlaylist[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { playTrack } = usePlayer();
 
   useEffect(() => {
     const fetchData = async () => {
-      const [recent, releases, playlists] = await Promise.all([
-        getRecentlyPlayed(6),
-        getNewReleases(6),
-        getUserPlaylists(6)
-      ]);
-      setRecentTracks(recent);
-      setNewReleases(releases);
-      setFeaturedPlaylists(playlists);
+      setIsLoading(true);
+      try {
+        const [recent, releases, playlists] = await Promise.all([
+          getRecentlyPlayed(6),
+          getNewReleases(6),
+          getUserPlaylists(6)
+        ]);
+        setRecentTracks(recent);
+        setNewReleases(releases);
+        setFeaturedPlaylists(playlists);
+      } catch (error) {
+        console.error('Error fetching home data:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchData();
@@ -136,13 +145,30 @@ const Home = () => {
     playTrack(trackUri);
   };
 
+  const renderSkeletons = () => (
+    <Grid>
+      {[...Array(6)].map((_, i) => (
+        <Card key={i} style={{ cursor: 'default' }}>
+          <CardImage>
+            <Skeleton height="100%" borderRadius="0" />
+          </CardImage>
+          <div style={{ marginTop: '12px' }}>
+            <Skeleton width="70%" height="16px" style={{ marginBottom: '8px' }} />
+            <Skeleton width="40%" height="14px" />
+          </div>
+        </Card>
+      ))}
+    </Grid>
+  );
+
   return (
     <HomeContainer>
       <Section>
         <SectionTitle>Recently Played</SectionTitle>
-        <Grid>
-          {recentTracks.map((track) => (
-            <Card key={track.id} onClick={() => playTrack(`spotify:track:${track.id}`)}>
+        {isLoading ? renderSkeletons() : (
+          <Grid>
+            {recentTracks.map((track) => (
+              <Card key={track.id} onClick={() => playTrack(`spotify:track:${track.id}`)}>
               <CardImage>
                 <img src={track.album.images[0]?.url} alt={track.name} />
                 <PlayButton className="play-button" onClick={(e) => handlePlay(e, `spotify:track:${track.id}`)}>
@@ -158,24 +184,27 @@ const Home = () => {
 
       <Section>
         <SectionTitle>New Releases</SectionTitle>
-        <Grid>
-          {newReleases.map((album) => (
-            <Card key={album.id}>
-              <CardImage>
-                <img src={album.images[0]?.url} alt={album.name} />
-              </CardImage>
-              <CardTitle>{album.name}</CardTitle>
-              <CardSubtitle>{album.artists.map(a => a.name).join(', ')}</CardSubtitle>
-            </Card>
-          ))}
-        </Grid>
+        {isLoading ? renderSkeletons() : (
+          <Grid>
+            {newReleases.map((album) => (
+              <Card key={album.id}>
+                <CardImage>
+                  <img src={album.images[0]?.url} alt={album.name} />
+                </CardImage>
+                <CardTitle>{album.name}</CardTitle>
+                <CardSubtitle>{album.artists.map(a => a.name).join(', ')}</CardSubtitle>
+              </Card>
+            ))}
+          </Grid>
+        )}
       </Section>
 
       <Section>
         <SectionTitle>Your Playlists</SectionTitle>
-        {featuredPlaylists.length > 0 ? (
-          <Grid>
-            {featuredPlaylists.map((playlist) => (
+        {isLoading ? renderSkeletons() : (
+          featuredPlaylists.length > 0 ? (
+            <Grid>
+              {featuredPlaylists.map((playlist) => (
               <Card key={playlist.id}>
                 <CardImage>
                   {playlist.images?.[0]?.url ? (

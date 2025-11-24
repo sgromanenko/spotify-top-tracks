@@ -1,5 +1,5 @@
 import React from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 
 interface SkeletonProps {
   width?: string;
@@ -9,15 +9,12 @@ interface SkeletonProps {
   className?: string;
 }
 
-const pulse = keyframes`
+const shimmer = keyframes`
   0% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 0.8;
+    background-position: -200% 0;
   }
   100% {
-    opacity: 0.6;
+    background-position: 200% 0;
   }
 `;
 
@@ -27,11 +24,18 @@ const StyledSkeleton = styled.div<{
   borderRadius: string;
   animation: boolean;
 }>`
-  background-color: ${({ theme }) => theme.colors.border};
+  background: ${({ theme }) => theme.colors.background.elevated};
+  background-image: linear-gradient(
+    90deg,
+    ${({ theme }) => theme.colors.background.elevated} 25%,
+    ${({ theme }) => theme.colors.background.paper} 37%,
+    ${({ theme }) => theme.colors.background.elevated} 63%
+  );
+  background-size: 200% 100%;
   width: ${({ width }) => width};
   height: ${({ height }) => height};
   border-radius: ${({ borderRadius }) => borderRadius};
-  animation: ${({ animation }) => (animation ? `${pulse} 1.5s ease-in-out infinite` : 'none')};
+  animation: ${({ animation }) => (animation ? css`${shimmer} 1.5s infinite linear` : 'none')};
 `;
 
 const Skeleton: React.FC<SkeletonProps> = ({
@@ -73,7 +77,7 @@ export const SkeletonButton = styled(Skeleton).attrs(props => ({
 }))``;
 
 export const SkeletonCard = styled(Skeleton).attrs(props => ({
-  height: props.height || '120px',
+  height: props.height || '180px',
   borderRadius: props.borderRadius || '8px',
 }))``;
 
