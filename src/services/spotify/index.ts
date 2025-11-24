@@ -1,75 +1,12 @@
 import apiClient from '../api/client';
-
-/**
- * Interface for Spotify artist data
- */
-export interface SpotifyArtist {
-  name: string;
-  id: string;
-}
-
-/**
- * Interface for Spotify track data
- */
-export interface SpotifyTrack {
-  id: string;
-  name: string;
-  artists: Array<{
-    id: string;
-    name: string;
-  }>;
-  album: {
-    id: string;
-    name: string;
-    images: Array<{
-      url: string;
-      height: number;
-      width: number;
-    }>;
-  };
-  duration_ms: number;
-  track_number: number;
-  preview_url: string | null;
-  is_playable: boolean;
-  popularity?: number;
-  explicit?: boolean;
-  external_urls?: { spotify: string };
-  external_ids?: { isrc: string };
-}
-
-/**
- * Interface for Spotify playlist data
- */
-export interface SpotifyPlaylist {
-  id: string;
-  name: string;
-  description: string;
-  images: { url: string; height: number; width: number }[];
-  tracks: {
-    total: number;
-  };
-  owner: {
-    display_name: string;
-    id: string;
-  };
-}
-
-/**
- * Interface for Spotify album data
- */
-export interface SpotifyAlbum {
-  id: string;
-  name: string;
-  artists: SpotifyArtist[];
-  images: { url: string; height: number; width: number }[];
-  release_date: string;
-  total_tracks: number;
-}
-
-/**
- * Type representing the time range for fetching user data
- */
-export type TimeRange = 'short_term' | 'medium_term' | 'long_term';
+import type {
+  SpotifyTrack,
+  SpotifyArtist,
+  SpotifyAlbum,
+  SpotifyPlaylist,
+  TimeRange,
+} from '@/types';
+import type { RecommendationOptions } from '@/types/api';
 
 /**
  * Fetches the user's top tracks from Spotify API
@@ -184,19 +121,6 @@ export async function getFeaturedPlaylists(limit = 10): Promise<SpotifyPlaylist[
     // Return empty array instead of throwing - this is non-critical content
     return [];
   }
-}
-
-export interface RecommendationOptions {
-  seedTracks?: string[];
-  seedArtists?: string[];
-  seedGenres?: string[];
-  targets?: {
-    energy?: number;
-    valence?: number;
-    danceability?: number;
-    [key: string]: number | undefined;
-  };
-  limit?: number;
 }
 
 /**
