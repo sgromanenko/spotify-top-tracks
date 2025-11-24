@@ -15,7 +15,12 @@ const CallbackHandler: React.FC = () => {
   const [isProcessed, setIsProcessed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const hasRun = React.useRef(false);
+
   useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
+
     const handleCallback = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
