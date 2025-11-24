@@ -27,6 +27,7 @@ const SCOPES = [
   'user-modify-playback-state',
   'user-read-currently-playing',
   'user-read-recently-played',
+  'user-follow-read',
   'streaming',
   'app-remote-control',
 ].join(' ');

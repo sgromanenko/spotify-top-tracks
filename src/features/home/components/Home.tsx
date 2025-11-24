@@ -180,6 +180,7 @@ const Home = () => {
             </Card>
           ))}
         </Grid>
+        )}
       </Section>
 
       <Section>
@@ -222,6 +223,7 @@ const Home = () => {
           </Grid>
         ) : (
           <CardSubtitle>No playlists found</CardSubtitle>
+        )
         )}
       </Section>
     </HomeContainer>
