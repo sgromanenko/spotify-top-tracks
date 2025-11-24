@@ -313,6 +313,9 @@ const SpotifyPlayer = () => {
   const [seekPosition, setSeekPosition] = useState(0);
   const [devices, setDevices] = useState<SpotifyDevice[]>([]);
   const [showDeviceSelector, setShowDeviceSelector] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
+  const currentTrackId = playerState?.track_window?.current_track?.id;
 
   // Sync error from context
   useEffect(() => {
@@ -322,6 +325,18 @@ const SpotifyPlayer = () => {
       return () => clearTimeout(timer);
     }
   }, [error]);
+
+  // Check if track is saved
+  useEffect(() => {
+    if (!currentTrackId) return;
+
+    const checkSaved = async () => {
+      const saved = await checkUserSavedTracks([currentTrackId]);
+      setIsSaved(saved[0] || false);
+    };
+
+    checkSaved();
+  }, [currentTrackId]);
 
   // Update progress from player state
   useEffect(() => {
@@ -435,21 +450,6 @@ const SpotifyPlayer = () => {
     album: { name: 'No Album', images: [] }
   };
   const artistNames = track.artists.map((artist: any) => artist.name).join(', ');
-
-  // Check if track is saved
-  const [isSaved, setIsSaved] = useState(false);
-  const currentTrackId = playerState?.track_window?.current_track?.id;
-
-  useEffect(() => {
-    if (!currentTrackId) return;
-
-    const checkSaved = async () => {
-      const saved = await checkUserSavedTracks([currentTrackId]);
-      setIsSaved(saved[0] || false);
-    };
-
-    checkSaved();
-  }, [currentTrackId]);
 
   const handleToggleSave = async () => {
     if (!currentTrackId) return;
