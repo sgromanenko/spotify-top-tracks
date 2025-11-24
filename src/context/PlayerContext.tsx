@@ -134,7 +134,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const transferPlayback = async (retries = 3) => {
           if (!isMounted) return;
           try {
-             await fetch(`https://api.spotify.com/v1/me/player`, {
+             const response = await fetch(`https://api.spotify.com/v1/me/player`, {
               method: 'PUT',
               body: JSON.stringify({ device_ids: [device_id], play: false }),
               headers: {
@@ -142,12 +142,19 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 Authorization: `Bearer ${token}`,
               },
             });
+
+            if (!response.ok) {
+              throw new Error(`Status: ${response.status}`);
+            }
+            
             console.log('Playback transferred successfully');
           } catch (e) {
-            console.error('Failed to transfer playback:', e);
+            console.warn('Transfer playback attempt failed:', e);
             if (retries > 0 && isMounted) {
               console.log(`Retrying transfer playback (${retries} retries left)...`);
               setTimeout(() => transferPlayback(retries - 1), 1000);
+            } else {
+              console.error('Failed to transfer playback after retries');
             }
           }
         };
