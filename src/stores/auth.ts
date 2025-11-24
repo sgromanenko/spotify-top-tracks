@@ -63,39 +63,9 @@ export const useAuthStore = create<AuthStore>()(
         error: null,
 
         // Actions
-        login: async (code: string) => {
-          set({ isLoading: true, error: null });
-          try {
-            // Exchange code for tokens
-            const response = await fetch('/api/auth/token', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ code }),
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to authenticate');
-            }
-
-            const { accessToken, refreshToken, user } = await response.json();
-
-            set({
-              token: accessToken,
-              refreshToken,
-              user,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null,
-            });
-          } catch (error) {
-            set({
-              error: error instanceof Error ? error.message : 'Login failed',
-              isLoading: false,
-              isAuthenticated: false,
-            });
-          }
+        login: async () => {
+          // Logic handled by AuthContext/spotifyAuth
+          console.warn('Login action in store is deprecated, use AuthContext');
         },
 
         logout: () => {
@@ -110,31 +80,8 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         refreshAccessToken: async () => {
-          const { refreshToken } = get();
-          if (!refreshToken) {
-            get().logout();
-            return;
-          }
-
-          try {
-            const response = await fetch('/api/auth/refresh', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ refreshToken }),
-            });
-
-            if (!response.ok) {
-              throw new Error('Token refresh failed');
-            }
-
-            const { accessToken } = await response.json();
-            set({ token: accessToken });
-          } catch (error) {
-            console.error('Token refresh failed:', error);
-            get().logout();
-          }
+           // Logic handled by AuthContext/spotifyAuth
+           console.warn('refreshAccessToken action in store is deprecated, use AuthContext');
         },
 
   setUser: (user: UserProfile) => set({ user }),

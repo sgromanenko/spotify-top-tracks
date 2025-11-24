@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { getSpotifyAuth } from '../../../services/auth/spotifyAuth';
+import { getSpotifyAuth, exchangeToken } from '../../../services/auth/spotifyAuth';
 
 const Login: React.FC = () => {
   const handleLogin = async () => {
@@ -40,29 +40,13 @@ const Login: React.FC = () => {
     }
 
     try {
-      const auth = getSpotifyAuth();
-      const response = await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${btoa(`${auth.clientId}:${auth.clientSecret}`)}`,
-        },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          code,
-          redirect_uri: auth.redirectUri,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get access token');
+      const success = await exchangeToken(code);
+      
+      if (success) {
+        window.location.href = '/';
+      } else {
+        throw new Error('Token exchange failed');
       }
-
-      const data = await response.json();
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('refresh_token', data.refresh_token);
-
-      window.location.href = '/';
     } catch (error) {
       console.error('Error during authentication:', error);
       window.location.href = '/login';

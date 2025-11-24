@@ -3,11 +3,9 @@ import { useAuthStore, UserProfile } from '@/stores/auth';
 
 import {
   clearStoredToken,
-  getAccessTokenFromHash,
   getStoredToken,
   loginWithSpotify,
   logout as logoutFromSpotify,
-  storeToken,
 } from '../services/auth/spotifyAuth';
 
 interface AuthContextType {
@@ -28,93 +26,95 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { setToken: setStoreToken, setUser, user } = useAuthStore();
 
   // Function to check for token and update state
-  const refreshAuthState = useCallback(() => {
-    // First check for token in localStorage
-    const storedToken = getStoredToken();
-    if (storedToken) {
-      setToken(storedToken);
-      return;
-    }
-
-    // If no token in storage, try to get from URL hash
-    const { token: hashToken, expires_in } = getAccessTokenFromHash();
-    if (hashToken && expires_in) {
-      storeToken(hashToken, expires_in);
-      setToken(hashToken);
-
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else {
+  const refreshAuthState = useCallback(async () => {
+    try {
+      // Try to get valid token (this will auto-refresh if needed)
+      const storedToken = await getStoredToken();
+      
+      if (storedToken) {
+        setToken(storedToken);
+        setStoreToken(storedToken);
+      } else {
+        setToken(null);
+        setStoreToken(null);
+      }
+    } catch (error) {
+      console.error('Error refreshing auth state:', error);
       setToken(null);
+      setStoreToken(null);
     }
-  }, []);
+  }, [setStoreToken]);
 
   // Check for token on initial load
   useEffect(() => {
-    refreshAuthState();
-    setLoading(false);
+    const initAuth = async () => {
+      await refreshAuthState();
+      setLoading(false);
+    };
+    initAuth();
   }, [refreshAuthState]);
 
-  // Periodically check token validity
+  // Periodically check token validity (every minute)
   useEffect(() => {
-    const checkTokenInterval = setInterval(() => {
-      if (token) {
-        // This will update our token state if it's expired
-        refreshAuthState();
-      }
-    }, 60000); // Check every minute
+    if (!token) return;
+
+    const checkTokenInterval = setInterval(async () => {
+      await refreshAuthState();
+    }, 60000);
 
     return () => clearInterval(checkTokenInterval);
   }, [token, refreshAuthState]);
 
-  // Sync token to store and ensure user profile is loaded when we have a token
+  // Ensure user profile is loaded when we have a token
   useEffect(() => {
-    if (token) {
-      setStoreToken(token);
-
-      // If we don't have a user yet, fetch it
-      if (!user) {
-        (async () => {
-          try {
-            const res = await fetch('https://api.spotify.com/v1/me', {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!res.ok) throw new Error(`Failed to fetch profile: ${res.status}`);
-            const profile = await res.json();
-            setUser({
-              id: profile.id,
-              spotifyId: profile.id,
-              displayName: profile.display_name || profile.id,
-              email: profile.email || '',
-              profileImage: profile.images?.[0]?.url,
-              preferences: {
-                theme: 'dark',
-                language: 'en',
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-                privacy: {
-                  profileVisibility: 'public',
-                  listeningActivity: 'public',
-                },
-              },
-              statistics: {
-                totalListeningTime: 0,
-                totalTracksPlayed: 0,
-                favoriteGenres: [],
-                topArtists: [],
-                listeningStreak: 0,
-                averageSessionLength: 0,
-              },
-              createdAt: new Date(),
-              lastActive: new Date(),
-            });
-          } catch (e) {
-            // eslint-disable-next-line no-console
-            console.warn('Could not load Spotify user profile on init:', e);
+    if (token && !user) {
+      (async () => {
+        try {
+          const res = await fetch('https://api.spotify.com/v1/me', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          
+          if (res.status === 401) {
+            // Token might be invalid despite our checks, force refresh
+            await refreshAuthState();
+            return;
           }
-        })();
-      }
+
+          if (!res.ok) throw new Error(`Failed to fetch profile: ${res.status}`);
+          
+          const profile = await res.json();
+          setUser({
+            id: profile.id,
+            spotifyId: profile.id,
+            displayName: profile.display_name || profile.id,
+            email: profile.email || '',
+            profileImage: profile.images?.[0]?.url,
+            preferences: {
+              theme: 'dark',
+              language: 'en',
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+              privacy: {
+                profileVisibility: 'public',
+                listeningActivity: 'public',
+              },
+            },
+            statistics: {
+              totalListeningTime: 0,
+              totalTracksPlayed: 0,
+              favoriteGenres: [],
+              topArtists: [],
+              listeningStreak: 0,
+              averageSessionLength: 0,
+            },
+            createdAt: new Date(),
+            lastActive: new Date(),
+          });
+        } catch (e) {
+          console.warn('Could not load Spotify user profile:', e);
+        }
+      })();
     }
-  }, [token, setStoreToken, setUser, user]);
+  }, [token, user, setUser, refreshAuthState]);
 
   const handleLogin = () => {
     loginWithSpotify();
@@ -123,8 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleLogout = () => {
     clearStoredToken();
     setToken(null);
-  // Clear store as well
-  useAuthStore.setState({ user: null, token: null, refreshToken: null, isAuthenticated: false });
+    useAuthStore.setState({ user: null, token: null, refreshToken: null, isAuthenticated: false });
     logoutFromSpotify();
   };
 

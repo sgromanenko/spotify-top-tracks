@@ -1,9 +1,16 @@
 const CLIENT_ID = import.meta.env.REACT_APP_SPOTIFY_CLIENT_ID as string | undefined;
+const CLIENT_SECRET = import.meta.env.REACT_APP_SPOTIFY_CLIENT_SECRET as string | undefined;
 const REDIRECT_URI =
   (import.meta.env.REACT_APP_REDIRECT_URI as string | undefined) ||
   (typeof window !== 'undefined' ? `${window.location.origin}/callback` : 'http://localhost:3000/callback');
-const AUTH_ENDPOINT = 'https://accounts.spotify.com/authorize';
-const RESPONSE_TYPE = 'token';
+
+// Storage keys
+const KEYS = {
+  ACCESS_TOKEN: 'spotify_access_token',
+  REFRESH_TOKEN: 'spotify_refresh_token',
+  EXPIRES_AT: 'spotify_token_expires_at',
+  AUTH_STATE: 'spotify_auth_state',
+};
 
 // Scopes determine what user data our app can access
 const SCOPES = [
@@ -22,108 +29,158 @@ const SCOPES = [
   'user-read-recently-played',
   'streaming',
   'app-remote-control',
-].join('%20');
+].join(' '); // Spotify API expects space-separated scopes for code flow
 
 /**
- * Redirects the user to Spotify login page
+ * Redirects the user to Spotify login page using Authorization Code Flow
  */
 export const loginWithSpotify = (): void => {
   if (!CLIENT_ID) {
-    // Fail fast with a clear message if env is not set
-    // eslint-disable-next-line no-console
-  console.error('REACT_APP_SPOTIFY_CLIENT_ID is not set');
+    console.error('REACT_APP_SPOTIFY_CLIENT_ID is not set');
     return;
   }
 
-  // Clear any stale tokens so we always request with up-to-date scopes
-  try {
-    localStorage.removeItem('spotify_access_token');
-    localStorage.removeItem('spotify_token_expires_at');
-  } catch {}
+  // Generate random state for security
+  const state = Math.random().toString(36).substring(7);
+  localStorage.setItem(KEYS.AUTH_STATE, state);
 
-  // Build auth URL with explicit re-consent to ensure new scopes are applied
-  const url = new URL(AUTH_ENDPOINT);
-  url.searchParams.set('client_id', CLIENT_ID);
-  url.searchParams.set('redirect_uri', REDIRECT_URI);
-  url.searchParams.set('response_type', RESPONSE_TYPE);
-  // Keep the SCOPES string already %20-joined for compatibility
-  url.searchParams.set('scope', SCOPES);
-  url.searchParams.set('show_dialog', 'true');
+  // Build auth URL
+  const url = new URL('https://accounts.spotify.com/authorize');
+  url.searchParams.append('client_id', CLIENT_ID);
+  url.searchParams.append('response_type', 'code');
+  url.searchParams.append('redirect_uri', REDIRECT_URI);
+  url.searchParams.append('scope', SCOPES);
+  url.searchParams.append('state', state);
+  url.searchParams.append('show_dialog', 'true');
 
   window.location.href = url.toString();
 };
 
 /**
- * Extracts access token from URL hash after redirect
+ * Exchanges authorization code for access and refresh tokens
  */
-export const getAccessTokenFromHash = (): { token: string | null; expires_in: number | null } => {
-  if (!window.location.hash) {
-    return { token: null, expires_in: null };
+export const exchangeToken = async (code: string): Promise<boolean> => {
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    console.error('Missing client credentials');
+    return false;
   }
 
-  const hashParams = window.location.hash
-    .substring(1)
-    .split('&')
-    .reduce(
-      (acc, item) => {
-        const [key, value] = item.split('=');
-        acc[key] = value;
-        return acc;
+  try {
+    const response = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${btoa(`${CLIENT_ID}:${CLIENT_SECRET}`)}`,
       },
-      {} as Record<string, string>,
-    );
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: REDIRECT_URI,
+      }),
+    });
 
-  return {
-    token: hashParams.access_token || null,
-    expires_in: hashParams.expires_in ? parseInt(hashParams.expires_in, 10) : null,
-  };
+    if (!response.ok) {
+      throw new Error('Failed to exchange code for token');
+    }
+
+    const data = await response.json();
+    storeTokens(data.access_token, data.refresh_token, data.expires_in);
+    return true;
+  } catch (error) {
+    console.error('Token exchange error:', error);
+    return false;
+  }
 };
 
 /**
- * Stores token in localStorage with expiration time
+ * Refreshes the access token using the refresh token
  */
-export const storeToken = (token: string, expiresIn: number): void => {
+export const refreshAccessToken = async (): Promise<string | null> => {
+  const refreshToken = localStorage.getItem(KEYS.REFRESH_TOKEN);
+  if (!refreshToken || !CLIENT_ID || !CLIENT_SECRET) {
+    return null;
+  }
+
+  try {
+    const response = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${btoa(`${CLIENT_ID}:${CLIENT_SECRET}`)}`,
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to refresh token');
+    }
+
+    const data = await response.json();
+    
+    // Update access token and expiration
+    // Note: refresh token might not be returned if it hasn't rotated
+    const newRefreshToken = data.refresh_token || refreshToken;
+    storeTokens(data.access_token, newRefreshToken, data.expires_in);
+    
+    return data.access_token;
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    // If refresh fails, clear everything to force re-login
+    clearStoredToken();
+    return null;
+  }
+};
+
+/**
+ * Stores tokens in localStorage
+ */
+export const storeTokens = (accessToken: string, refreshToken: string, expiresIn: number): void => {
   const now = new Date();
   const expiresAt = now.getTime() + expiresIn * 1000;
 
-  localStorage.setItem('spotify_access_token', token);
-  localStorage.setItem('spotify_token_expires_at', expiresAt.toString());
+  localStorage.setItem(KEYS.ACCESS_TOKEN, accessToken);
+  localStorage.setItem(KEYS.REFRESH_TOKEN, refreshToken);
+  localStorage.setItem(KEYS.EXPIRES_AT, expiresAt.toString());
 };
 
 /**
- * Gets token from localStorage
+ * Gets valid access token, refreshing if necessary
  */
-export const getStoredToken = (): string | null => {
-  const token = localStorage.getItem('spotify_access_token');
-  const expiresAt = localStorage.getItem('spotify_token_expires_at');
+export const getStoredToken = async (): Promise<string | null> => {
+  const token = localStorage.getItem(KEYS.ACCESS_TOKEN);
+  const expiresAt = localStorage.getItem(KEYS.EXPIRES_AT);
 
   if (!token || !expiresAt) {
     return null;
   }
 
   const now = new Date();
-  if (now.getTime() > parseInt(expiresAt, 10)) {
-    // Token expired, clear it
-    clearStoredToken();
-    return null;
+  // Refresh if expired or about to expire (within 5 minutes)
+  if (now.getTime() > parseInt(expiresAt, 10) - 300000) {
+    return await refreshAccessToken();
   }
 
   return token;
 };
 
 /**
- * Clears token from localStorage
+ * Clears all auth data
  */
 export const clearStoredToken = (): void => {
-  localStorage.removeItem('spotify_access_token');
-  localStorage.removeItem('spotify_token_expires_at');
+  localStorage.removeItem(KEYS.ACCESS_TOKEN);
+  localStorage.removeItem(KEYS.REFRESH_TOKEN);
+  localStorage.removeItem(KEYS.EXPIRES_AT);
+  localStorage.removeItem(KEYS.AUTH_STATE);
 };
 
 /**
- * Checks if user is authenticated
+ * Checks if user is authenticated (has valid token or refresh token)
  */
 export const isAuthenticated = (): boolean => {
-  return getStoredToken() !== null;
+  return !!localStorage.getItem(KEYS.ACCESS_TOKEN);
 };
 
 /**
@@ -131,11 +188,11 @@ export const isAuthenticated = (): boolean => {
  */
 export const logout = (): void => {
   clearStoredToken();
-  window.location.href = '/';
+  window.location.href = '/login';
 };
 
 export const getSpotifyAuth = () => ({
-  clientId: (import.meta.env.REACT_APP_SPOTIFY_CLIENT_ID as string) || '',
-  clientSecret: (import.meta.env.REACT_APP_SPOTIFY_CLIENT_SECRET as string) || '',
-  redirectUri: (import.meta.env.REACT_APP_REDIRECT_URI as string) || '',
+  clientId: CLIENT_ID || '',
+  clientSecret: CLIENT_SECRET || '',
+  redirectUri: REDIRECT_URI,
 });

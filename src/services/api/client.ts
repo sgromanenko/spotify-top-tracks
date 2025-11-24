@@ -28,7 +28,7 @@ export interface ApiError {
 async function apiClient<T>({ method, endpoint, body, token }: ApiClientOptions): Promise<T> {
   try {
     // Use provided token or get from storage
-    const authToken = token || getStoredToken();
+    const authToken = token || (await getStoredToken());
 
     if (!authToken) {
       // If no token is available, redirect to login immediately
