@@ -1,5 +1,4 @@
 const CLIENT_ID = import.meta.env.REACT_APP_SPOTIFY_CLIENT_ID as string | undefined;
-const CLIENT_SECRET = import.meta.env.REACT_APP_SPOTIFY_CLIENT_SECRET as string | undefined;
 const REDIRECT_URI =
   (import.meta.env.REACT_APP_REDIRECT_URI as string | undefined) ||
   (typeof window !== 'undefined' ? `${window.location.origin}/callback` : 'http://localhost:3000/callback');
@@ -10,6 +9,7 @@ const KEYS = {
   REFRESH_TOKEN: 'spotify_refresh_token',
   EXPIRES_AT: 'spotify_token_expires_at',
   AUTH_STATE: 'spotify_auth_state',
+  CODE_VERIFIER: 'spotify_code_verifier',
 };
 
 // Scopes determine what user data our app can access
@@ -29,16 +29,47 @@ const SCOPES = [
   'user-read-recently-played',
   'streaming',
   'app-remote-control',
-].join(' '); // Spotify API expects space-separated scopes for code flow
+].join(' ');
 
 /**
- * Redirects the user to Spotify login page using Authorization Code Flow
+ * Generates a random string for the code verifier
  */
-export const loginWithSpotify = (): void => {
+const generateCodeVerifier = (length: number): string => {
+  let text = '';
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for (let i = 0; i < length; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+};
+
+/**
+ * Generates the code challenge from the verifier
+ */
+const generateCodeChallenge = async (codeVerifier: string): Promise<string> => {
+  const data = new TextEncoder().encode(codeVerifier);
+  const digest = await window.crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+};
+
+/**
+ * Redirects the user to Spotify login page using PKCE Flow
+ */
+export const loginWithSpotify = async (): Promise<void> => {
   if (!CLIENT_ID) {
     console.error('REACT_APP_SPOTIFY_CLIENT_ID is not set');
     return;
   }
+
+  // Generate and store code verifier
+  const codeVerifier = generateCodeVerifier(128);
+  localStorage.setItem(KEYS.CODE_VERIFIER, codeVerifier);
+
+  // Generate code challenge
+  const codeChallenge = await generateCodeChallenge(codeVerifier);
 
   // Generate random state for security
   const state = Math.random().toString(36).substring(7);
@@ -51,17 +82,25 @@ export const loginWithSpotify = (): void => {
   url.searchParams.append('redirect_uri', REDIRECT_URI);
   url.searchParams.append('scope', SCOPES);
   url.searchParams.append('state', state);
+  url.searchParams.append('code_challenge_method', 'S256');
+  url.searchParams.append('code_challenge', codeChallenge);
   url.searchParams.append('show_dialog', 'true');
 
   window.location.href = url.toString();
 };
 
 /**
- * Exchanges authorization code for access and refresh tokens
+ * Exchanges authorization code for access and refresh tokens using PKCE
  */
 export const exchangeToken = async (code: string): Promise<boolean> => {
-  if (!CLIENT_ID || !CLIENT_SECRET) {
-    console.error('Missing client credentials');
+  if (!CLIENT_ID) {
+    console.error('Missing client ID');
+    return false;
+  }
+
+  const codeVerifier = localStorage.getItem(KEYS.CODE_VERIFIER);
+  if (!codeVerifier) {
+    console.error('Missing code verifier');
     return false;
   }
 
@@ -70,21 +109,28 @@ export const exchangeToken = async (code: string): Promise<boolean> => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${btoa(`${CLIENT_ID}:${CLIENT_SECRET}`)}`,
       },
       body: new URLSearchParams({
+        client_id: CLIENT_ID,
         grant_type: 'authorization_code',
         code,
         redirect_uri: REDIRECT_URI,
+        code_verifier: codeVerifier,
       }),
     });
 
     if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Token exchange failed:', errorData);
       throw new Error('Failed to exchange code for token');
     }
 
     const data = await response.json();
     storeTokens(data.access_token, data.refresh_token, data.expires_in);
+    
+    // Clean up verifier
+    localStorage.removeItem(KEYS.CODE_VERIFIER);
+    
     return true;
   } catch (error) {
     console.error('Token exchange error:', error);
@@ -97,7 +143,7 @@ export const exchangeToken = async (code: string): Promise<boolean> => {
  */
 export const refreshAccessToken = async (): Promise<string | null> => {
   const refreshToken = localStorage.getItem(KEYS.REFRESH_TOKEN);
-  if (!refreshToken || !CLIENT_ID || !CLIENT_SECRET) {
+  if (!refreshToken || !CLIENT_ID) {
     return null;
   }
 
@@ -106,9 +152,9 @@ export const refreshAccessToken = async (): Promise<string | null> => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${btoa(`${CLIENT_ID}:${CLIENT_SECRET}`)}`,
       },
       body: new URLSearchParams({
+        client_id: CLIENT_ID,
         grant_type: 'refresh_token',
         refresh_token: refreshToken,
       }),
@@ -121,14 +167,12 @@ export const refreshAccessToken = async (): Promise<string | null> => {
     const data = await response.json();
     
     // Update access token and expiration
-    // Note: refresh token might not be returned if it hasn't rotated
     const newRefreshToken = data.refresh_token || refreshToken;
     storeTokens(data.access_token, newRefreshToken, data.expires_in);
     
     return data.access_token;
   } catch (error) {
     console.error('Token refresh error:', error);
-    // If refresh fails, clear everything to force re-login
     clearStoredToken();
     return null;
   }
@@ -174,6 +218,7 @@ export const clearStoredToken = (): void => {
   localStorage.removeItem(KEYS.REFRESH_TOKEN);
   localStorage.removeItem(KEYS.EXPIRES_AT);
   localStorage.removeItem(KEYS.AUTH_STATE);
+  localStorage.removeItem(KEYS.CODE_VERIFIER);
 };
 
 /**
@@ -193,6 +238,6 @@ export const logout = (): void => {
 
 export const getSpotifyAuth = () => ({
   clientId: CLIENT_ID || '',
-  clientSecret: CLIENT_SECRET || '',
+  clientSecret: '', // Not used in PKCE
   redirectUri: REDIRECT_URI,
 });
