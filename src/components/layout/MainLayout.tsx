@@ -48,11 +48,9 @@ const MainLayout: React.FC = () => {
         <ContentArea>
           <Outlet />
         </ContentArea>
-        {showPlayer && (
-          <PlayerArea>
-            <SpotifyPlayer />
-          </PlayerArea>
-        )}
+        <PlayerArea>
+          <SpotifyPlayer />
+        </PlayerArea>
       </MainContent>
     </AppContainer>
   );
