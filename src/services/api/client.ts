@@ -69,7 +69,7 @@ async function apiClient<T>({ method, endpoint, body, token }: ApiClientOptions)
 
     return await response.json();
   } catch (error) {
-    console.error('API request failed:', error);
+    // Re-throw error so caller can handle it
     throw error;
   }
 }

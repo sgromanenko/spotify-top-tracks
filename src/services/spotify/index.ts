@@ -121,13 +121,13 @@ export async function getFeaturedPlaylists(limit = 10): Promise<SpotifyPlaylist[
   try {
     const response = await apiClient<{ playlists: { items: SpotifyPlaylist[] } }>({
       method: 'GET',
-      // Sometimes this endpoint has issues, so we'll try without country first
-      endpoint: `v1/browse/featured-playlists?limit=${limit}`,
+      // Add locale to help with region-specific content
+      endpoint: `v1/browse/featured-playlists?limit=${limit}&locale=en_US`,
     });
     return response.playlists?.items || [];
   } catch (error) {
-    console.error('Error fetching featured playlists:', error);
-    // Return empty array instead of throwing - this is non-critical content
+    // Silently fail for featured playlists as it's often region-locked or unavailable
+    // This prevents 404 noise in the console
     return [];
   }
 }
