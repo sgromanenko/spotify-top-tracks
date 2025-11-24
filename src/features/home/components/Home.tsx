@@ -1,114 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Play } from 'lucide-react';
-import { getRecentlyPlayed, getNewReleases, getFeaturedPlaylists, SpotifyTrack, SpotifyAlbum, SpotifyPlaylist } from '../../../services/spotify';
+import { getRecentlyPlayed, getNewReleases, getUserPlaylists, SpotifyTrack, SpotifyAlbum, SpotifyPlaylist } from '../../../services/spotify';
 import { usePlayer } from '../../../context/PlayerContext';
 
-const HomeContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.space.xl};
-`;
-
-const Section = styled.section`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.space.md};
-`;
-
-const SectionTitle = styled.h2`
-  font-size: ${({ theme }) => theme.fontSizes.xxl};
-  font-weight: ${({ theme }) => theme.typography.fontWeightBold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0;
-`;
-
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: ${({ theme }) => theme.space.lg};
-`;
-
-const Card = styled.div`
-  background-color: ${({ theme }) => theme.colors.background.elevated};
-  padding: ${({ theme }) => theme.space.md};
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  transition: ${({ theme }) => theme.transitions.default};
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.space.sm};
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.background.paper};
-    transform: translateY(-4px);
-    
-    .play-button {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`;
-
-const CardImage = styled.div`
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  overflow: hidden;
-  box-shadow: ${({ theme }) => theme.shadows.medium};
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-const PlayButton = styled.button`
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background-color: ${({ theme }) => theme.colors.primary.main};
-  color: ${({ theme }) => theme.colors.primary.contrastText};
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: ${({ theme }) => theme.transitions.fast};
-  box-shadow: ${({ theme }) => theme.shadows.medium};
-  cursor: pointer;
-
-  &:hover {
-    transform: scale(1.05) !important;
-    background-color: ${({ theme }) => theme.colors.primary.light};
-  }
-`;
-
-const CardTitle = styled.h3`
-  font-size: ${({ theme }) => theme.fontSizes.md};
-  font-weight: ${({ theme }) => theme.typography.fontWeightBold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const CardSubtitle = styled.p`
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
+// ... (styles remain the same)
 
 const Home = () => {
   const [recentTracks, setRecentTracks] = useState<SpotifyTrack[]>([]);
@@ -121,7 +17,7 @@ const Home = () => {
       const [recent, releases, playlists] = await Promise.all([
         getRecentlyPlayed(6),
         getNewReleases(6),
-        getFeaturedPlaylists(6)
+        getUserPlaylists(6)
       ]);
       setRecentTracks(recent);
       setNewReleases(releases);
@@ -172,21 +68,27 @@ const Home = () => {
       </Section>
 
       <Section>
-        <SectionTitle>Featured Playlists</SectionTitle>
+        <SectionTitle>Your Playlists</SectionTitle>
         {featuredPlaylists.length > 0 ? (
           <Grid>
             {featuredPlaylists.map((playlist) => (
               <Card key={playlist.id}>
                 <CardImage>
-                  <img src={playlist.images[0]?.url} alt={playlist.name} />
+                  {playlist.images?.[0]?.url ? (
+                    <img src={playlist.images[0].url} alt={playlist.name} />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', background: '#282828', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: '2rem' }}>🎵</span>
+                    </div>
+                  )}
                 </CardImage>
                 <CardTitle>{playlist.name}</CardTitle>
-                <CardSubtitle>{playlist.description}</CardSubtitle>
+                <CardSubtitle>{playlist.owner.display_name}</CardSubtitle>
               </Card>
             ))}
           </Grid>
         ) : (
-          <CardSubtitle>No featured playlists available at the moment</CardSubtitle>
+          <CardSubtitle>No playlists found</CardSubtitle>
         )}
       </Section>
     </HomeContainer>

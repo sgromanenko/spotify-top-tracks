@@ -422,14 +422,19 @@ const SpotifyPlayer = () => {
     artists: [{ name: 'Select a track' }],
     album: { name: 'No Album', images: [] }
   };
-  const albumImage = track.album.images[0]?.url || 'https://via.placeholder.com/48';
   const artistNames = track.artists.map((artist: any) => artist.name).join(', ');
 
   return (
     <PlayerContainer>
       <PlayerContent>
         <NowPlaying>
-          <AlbumArt src={albumImage} alt={track.name} />
+          {track?.album?.images?.[0]?.url ? (
+            <AlbumArt src={track.album.images[0].url} alt={track.name} />
+          ) : (
+            <PlaceholderImage>
+              <Music size={24} />
+            </PlaceholderImage>
+          )}
           <TrackInfo>
             <TrackName>{track.name}</TrackName>
             <ArtistName>{artistNames}</ArtistName>
