@@ -70,14 +70,19 @@ const ButtonContainer = styled.button<{
         `;
       case 'secondary':
         return css`
-          background-color: ${theme.colors.secondary.main};
+          background-color: transparent;
           color: white;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          
           &:hover:not(:disabled) {
-            background-color: ${theme.colors.secondary.main}dd;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: white;
             box-shadow: ${theme.shadows.sm};
           }
+          
           &:active:not(:disabled) {
-            background-color: ${theme.colors.secondary.main}ee;
+            background-color: rgba(255, 255, 255, 0.05);
+            transform: translateY(0);
           }
         `;
       case 'danger':
