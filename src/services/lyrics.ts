@@ -1,4 +1,4 @@
-import apiClient from './api/client';
+import { SpotifyTrack } from '@/types';
 
 interface LyricsSearchParams {
   title: string;
@@ -68,33 +68,6 @@ export async function getTrackLyrics(
   } catch (error) {
     console.error('Error in getTrackLyrics:', error);
     return null;
-  }
-}
-
-/**
- * Fetches additional track information from Spotify API
- *
- * @param trackId The Spotify track ID
- * @returns Promise that resolves to track details object
- */
-export async function getTrackDetails(trackId: string): Promise<any> {
-  try {
-    if (!trackId) {
-      console.error('Invalid track ID provided');
-      throw new Error('Invalid track ID');
-    }
-
-    console.log(`Fetching track details for: ${trackId}`);
-
-    const response = await apiClient({
-      method: 'GET',
-      endpoint: `v1/tracks/${trackId}`,
-    });
-
-    return response;
-  } catch (error) {
-    console.error('Error fetching track details:', error);
-    throw error;
   }
 }
 

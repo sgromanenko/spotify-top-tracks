@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { SpotifyTrack } from '../../../services/spotify';
-import { getTrackLyrics } from '../../../services/trackDetails';
+import { getTrackLyrics } from '../../../services/lyrics';
 
 const Container = styled.div`
   display: flex;
