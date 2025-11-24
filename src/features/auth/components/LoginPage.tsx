@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 
 import Button from '../../../components/shared/Button';
-import { useAuth } from '../../../context/AuthContext';
+import { loginWithSpotify } from '../../../services/auth/spotifyAuth';
 
 const LoginContainer = styled.div`
   display: flex;
@@ -35,17 +35,17 @@ const Subtitle = styled.p`
 `;
 
 const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const handleLogin = () => loginWithSpotify();
 
   return (
     <LoginContainer>
-      <Logo>Spotify Tracks</Logo>
+      <Logo>Spotify Enhanced</Logo>
       <Title>Discover Your Music</Title>
       <Subtitle>
         Connect with your Spotify account to see your top tracks, analyze their audio features, and
-        explore your playlists.
+        explore your playlists with enhanced features.
       </Subtitle>
-      <Button onClick={login} variant="primary" size="lg">
+      <Button onClick={handleLogin} variant="primary" size="lg">
         Login with Spotify
       </Button>
     </LoginContainer>

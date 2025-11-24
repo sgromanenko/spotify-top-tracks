@@ -4,12 +4,19 @@ import styled from 'styled-components';
 
 import ProtectedRoute from './components/common/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
-import { AuthProvider } from './context/AuthContext';
-import { PlayerProvider } from './context/PlayerContext';
-import { SpotifyProvider } from './context/SpotifyContext';
 import CallbackHandler from './features/auth/components/CallbackHandler';
 import LoginPage from './features/auth/components/LoginPage';
+import PlaceholderPage from './components/common/PlaceholderPage';
+import Home from './features/home/components/Home';
+import Search from './features/search/components/Search';
+import Library from './features/library/components/Library';
+import MoodMix from './features/mood-mix/components/MoodMix';
+import Stats from './features/stats/components/Stats';
+import { QueryProvider } from './providers/QueryProvider';
 import { ThemeProvider } from './theme/ThemeContext';
+import { PlayerProvider } from './context/PlayerContext';
+import { AuthProvider } from './context/AuthContext';
+import { SpotifyProvider } from './context/SpotifyContext';
 
 // Lazy loaded components for code splitting
 const TopTracks = lazy(() => import('./features/tracks/components/TopTracks'));
@@ -46,8 +53,9 @@ const LoadingSpinner = styled.div`
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <Router>
+      <QueryProvider>
+        <AuthProvider>
+          <Router>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/callback" element={<CallbackHandler />} />
@@ -63,7 +71,7 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="/top-tracks" replace />} />
+              <Route index element={<Home />} />
               <Route
                 path="top-tracks"
                 element={
@@ -80,11 +88,16 @@ function App() {
                   </Suspense>
                 }
               />
+              <Route path="search" element={<Search />} />
+              <Route path="library" element={<Library />} />
+              <Route path="mood-mix" element={<MoodMix />} />
+              <Route path="stats" element={<Stats />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </Router>
-      </AuthProvider>
+          </Router>
+        </AuthProvider>
+      </QueryProvider>
     </ThemeProvider>
   );
 }

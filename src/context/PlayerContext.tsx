@@ -18,6 +18,8 @@ interface PlayerState {
   paused: boolean;
   position: number;
   duration: number;
+  shuffle: boolean;
+  repeat_mode: 0 | 1 | 2; // 0: off, 1: context, 2: track
   track_window: {
     current_track: {
       id: string;
@@ -42,11 +44,18 @@ interface PlayerContextType {
   playerState: PlayerState | null;
   isReady: boolean;
   isPlaying: boolean;
+  shuffleState: boolean;
+  repeatMode: 'off' | 'context' | 'track';
   error: string | null;
   playTrack: (trackUri: string) => void;
   togglePlay: () => void;
   previousTrack: () => void;
   nextTrack: () => void;
+  toggleShuffle: () => void;
+  setRepeatMode: (mode: 'off' | 'context' | 'track') => void;
+  seekToPosition: (positionMs: number) => void;
+  getAvailableDevices: () => Promise<any[]>;
+  transferPlayback: (deviceId: string) => Promise<void>;
 }
 
 // Create the context
@@ -63,6 +72,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isReady, setIsReady] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Derived state
+  const shuffleState = playerState?.shuffle ?? false;
+  const repeatMode = playerState?.repeat_mode === 1 ? 'context' : playerState?.repeat_mode === 2 ? 'track' : 'off';
 
   // Initialize the player
   useEffect(() => {
@@ -104,6 +117,29 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setDeviceId(device_id);
         setIsReady(true);
         setError(null);
+        
+        // Auto-transfer playback to this device to make it active
+        const transferPlayback = async (retries = 3) => {
+          try {
+             await fetch(`https://api.spotify.com/v1/me/player`, {
+              method: 'PUT',
+              body: JSON.stringify({ device_ids: [device_id], play: false }),
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            console.log('Playback transferred successfully');
+          } catch (e) {
+            console.error('Failed to transfer playback:', e);
+            if (retries > 0) {
+              console.log(`Retrying transfer playback (${retries} retries left)...`);
+              setTimeout(() => transferPlayback(retries - 1), 1000);
+            }
+          }
+        };
+        // Wait a bit for the device to be registered on the server side
+        setTimeout(() => transferPlayback(), 500);
       });
 
       // Not ready event
@@ -218,17 +254,90 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     player.nextTrack();
   }, [player]);
 
+  // Seek to position
+  const seekToPosition = useCallback((positionMs: number) => {
+    if (!player) return;
+    player.seek(positionMs);
+  }, [player]);
+
+  // Toggle shuffle
+  const toggleShuffle = useCallback(async () => {
+    try {
+      await fetch(`https://api.spotify.com/v1/me/player/shuffle?state=${!shuffleState}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error('Error toggling shuffle:', error);
+    }
+  }, [token, shuffleState]);
+
+  // Set repeat mode
+  const setRepeatMode = useCallback(async (mode: 'off' | 'context' | 'track') => {
+    try {
+      await fetch(`https://api.spotify.com/v1/me/player/repeat?state=${mode}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error('Error setting repeat mode:', error);
+    }
+  }, [token]);
+
+  // Get available devices
+  const getAvailableDevices = useCallback(async () => {
+    try {
+      const response = await fetch('https://api.spotify.com/v1/me/player/devices', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      return data.devices || [];
+    } catch (error) {
+      console.error('Error fetching devices:', error);
+      return [];
+    }
+  }, [token]);
+
+  // Transfer playback
+  const transferPlayback = useCallback(async (targetDeviceId: string) => {
+    try {
+      await fetch('https://api.spotify.com/v1/me/player', {
+        method: 'PUT',
+        body: JSON.stringify({ device_ids: [targetDeviceId], play: true }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error('Error transferring playback:', error);
+    }
+  }, [token]);
+
   const value = {
     player,
     deviceId,
     playerState,
     isReady,
     isPlaying,
+    shuffleState,
+    repeatMode,
     error,
     playTrack,
     togglePlay,
     previousTrack,
     nextTrack,
+    toggleShuffle,
+    setRepeatMode,
+    seekToPosition,
+    getAvailableDevices,
+    transferPlayback,
   };
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;

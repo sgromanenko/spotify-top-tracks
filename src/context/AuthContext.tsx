@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { useAuthStore, UserProfile } from '@/stores/auth';
 
 import {
   clearStoredToken,
@@ -16,6 +17,7 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
   refreshAuthState: () => void;
+  user: UserProfile | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { setToken: setStoreToken, setUser, user } = useAuthStore();
 
   // Function to check for token and update state
   const refreshAuthState = useCallback(() => {
@@ -64,6 +67,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => clearInterval(checkTokenInterval);
   }, [token, refreshAuthState]);
 
+  // Sync token to store and ensure user profile is loaded when we have a token
+  useEffect(() => {
+    if (token) {
+      setStoreToken(token);
+
+      // If we don't have a user yet, fetch it
+      if (!user) {
+        (async () => {
+          try {
+            const res = await fetch('https://api.spotify.com/v1/me', {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) throw new Error(`Failed to fetch profile: ${res.status}`);
+            const profile = await res.json();
+            setUser({
+              id: profile.id,
+              spotifyId: profile.id,
+              displayName: profile.display_name || profile.id,
+              email: profile.email || '',
+              profileImage: profile.images?.[0]?.url,
+              preferences: {
+                theme: 'dark',
+                language: 'en',
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+                privacy: {
+                  profileVisibility: 'public',
+                  listeningActivity: 'public',
+                },
+              },
+              statistics: {
+                totalListeningTime: 0,
+                totalTracksPlayed: 0,
+                favoriteGenres: [],
+                topArtists: [],
+                listeningStreak: 0,
+                averageSessionLength: 0,
+              },
+              createdAt: new Date(),
+              lastActive: new Date(),
+            });
+          } catch (e) {
+            // eslint-disable-next-line no-console
+            console.warn('Could not load Spotify user profile on init:', e);
+          }
+        })();
+      }
+    }
+  }, [token, setStoreToken, setUser, user]);
+
   const handleLogin = () => {
     loginWithSpotify();
   };
@@ -71,6 +123,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleLogout = () => {
     clearStoredToken();
     setToken(null);
+  // Clear store as well
+  useAuthStore.setState({ user: null, token: null, refreshToken: null, isAuthenticated: false });
     logoutFromSpotify();
   };
 
@@ -81,6 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout: handleLogout,
     loading,
     refreshAuthState,
+    user,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

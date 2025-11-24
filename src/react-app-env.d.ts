@@ -1,1 +1,1 @@
-/// <reference types="react-scripts" />
+// Deprecated: CRA type reference removed after Vite migration.

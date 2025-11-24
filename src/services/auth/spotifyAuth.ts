@@ -1,5 +1,7 @@
-const CLIENT_ID = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
-const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI || 'http://localhost:3000/callback';
+const CLIENT_ID = import.meta.env.REACT_APP_SPOTIFY_CLIENT_ID as string | undefined;
+const REDIRECT_URI =
+  (import.meta.env.REACT_APP_REDIRECT_URI as string | undefined) ||
+  (typeof window !== 'undefined' ? `${window.location.origin}/callback` : 'http://localhost:3000/callback');
 const AUTH_ENDPOINT = 'https://accounts.spotify.com/authorize';
 const RESPONSE_TYPE = 'token';
 
@@ -9,10 +11,15 @@ const SCOPES = [
   'user-read-email',
   'user-top-read',
   'user-library-read',
+  'user-library-modify',
   'playlist-read-private',
   'playlist-read-collaborative',
+  'playlist-modify-public',
+  'playlist-modify-private',
   'user-read-playback-state',
   'user-modify-playback-state',
+  'user-read-currently-playing',
+  'user-read-recently-played',
   'streaming',
   'app-remote-control',
 ].join('%20');
@@ -21,7 +28,29 @@ const SCOPES = [
  * Redirects the user to Spotify login page
  */
 export const loginWithSpotify = (): void => {
-  window.location.href = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPES}`;
+  if (!CLIENT_ID) {
+    // Fail fast with a clear message if env is not set
+    // eslint-disable-next-line no-console
+  console.error('REACT_APP_SPOTIFY_CLIENT_ID is not set');
+    return;
+  }
+
+  // Clear any stale tokens so we always request with up-to-date scopes
+  try {
+    localStorage.removeItem('spotify_access_token');
+    localStorage.removeItem('spotify_token_expires_at');
+  } catch {}
+
+  // Build auth URL with explicit re-consent to ensure new scopes are applied
+  const url = new URL(AUTH_ENDPOINT);
+  url.searchParams.set('client_id', CLIENT_ID);
+  url.searchParams.set('redirect_uri', REDIRECT_URI);
+  url.searchParams.set('response_type', RESPONSE_TYPE);
+  // Keep the SCOPES string already %20-joined for compatibility
+  url.searchParams.set('scope', SCOPES);
+  url.searchParams.set('show_dialog', 'true');
+
+  window.location.href = url.toString();
 };
 
 /**
@@ -104,3 +133,9 @@ export const logout = (): void => {
   clearStoredToken();
   window.location.href = '/';
 };
+
+export const getSpotifyAuth = () => ({
+  clientId: (import.meta.env.REACT_APP_SPOTIFY_CLIENT_ID as string) || '',
+  clientSecret: (import.meta.env.REACT_APP_SPOTIFY_CLIENT_SECRET as string) || '',
+  redirectUri: (import.meta.env.REACT_APP_REDIRECT_URI as string) || '',
+});

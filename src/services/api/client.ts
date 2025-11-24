@@ -1,4 +1,4 @@
-import { getStoredToken } from '../auth/spotifyAuth';
+import { getStoredToken, clearStoredToken } from '../auth/spotifyAuth';
 
 const BASE_URL = 'https://api.spotify.com';
 
@@ -31,6 +31,9 @@ async function apiClient<T>({ method, endpoint, body, token }: ApiClientOptions)
     const authToken = token || getStoredToken();
 
     if (!authToken) {
+      // If no token is available, redirect to login immediately
+      console.warn('No authentication token available, redirecting to login...');
+      window.location.href = '/login';
       throw new Error('No authentication token available');
     }
 
@@ -48,13 +51,16 @@ async function apiClient<T>({ method, endpoint, body, token }: ApiClientOptions)
 
     const response = await fetch(url, config);
 
+    if (response.status === 401) {
+      // Token expired or invalid
+      console.warn('Token expired or invalid (401), redirecting to login...');
+      clearStoredToken();
+      window.location.href = '/login';
+      throw new Error('Authentication failed');
+    }
+
     if (!response.ok) {
       // Handle specific error status codes
-      if (response.status === 401) {
-        // Token expired - could trigger a refresh token flow here
-        throw new Error('Your session has expired. Please log in again.');
-      }
-
       const errorData = await response.json().catch(() => null);
       throw new Error(
         errorData?.error?.message || `HTTP Error ${response.status}: ${response.statusText}`,

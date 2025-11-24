@@ -17,7 +17,7 @@ interface TrackContainerProps {
 
 const TrackContainer = styled.div<TrackContainerProps>`
   display: grid;
-  grid-template-columns: auto minmax(45px, 10%) 1fr auto;
+  grid-template-columns: 40px minmax(45px, 10%) 1fr auto;
   align-items: center;
   padding: 0.75rem 1rem;
   background-color: ${({ isSelected, theme }) =>
@@ -33,7 +33,7 @@ const TrackContainer = styled.div<TrackContainerProps>`
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    grid-template-columns: auto minmax(45px, 15%) 1fr auto;
+    grid-template-columns: 30px minmax(45px, 15%) 1fr auto;
     padding: 0.5rem;
   }
 `;

@@ -19,6 +19,7 @@ declare module 'styled-components' {
         default: string;
         paper: string;
         elevated: string;
+        glass: string;
       };
       text: {
         primary: string;
@@ -50,16 +51,19 @@ declare module 'styled-components' {
         fontSize: string;
         fontWeight: number;
         lineHeight: number;
+        letterSpacing?: string;
       };
       h2: {
         fontSize: string;
         fontWeight: number;
         lineHeight: number;
+        letterSpacing?: string;
       };
       h3: {
         fontSize: string;
         fontWeight: number;
         lineHeight: number;
+        letterSpacing?: string;
       };
       h4: {
         fontSize: string;
@@ -79,6 +83,7 @@ declare module 'styled-components' {
         fontWeight: number;
         lineHeight: number;
         textTransform: string;
+        letterSpacing?: string;
       };
     };
     spacing: (factor: number) => string;
@@ -89,6 +94,7 @@ declare module 'styled-components' {
       lg: string;
       xl: string;
       xxl: string;
+      xxxl: string;
     };
     fonts: {
       body: string;
@@ -101,6 +107,8 @@ declare module 'styled-components' {
       lg: string;
       xl: string;
       xxl: string;
+      xxxl: string;
+      display: string;
     };
     breakpoints: {
       xs: string;
@@ -108,11 +116,13 @@ declare module 'styled-components' {
       md: string;
       lg: string;
       xl: string;
+      xxl: string;
     };
     borderRadius: {
       small: string;
       medium: string;
       large: string;
+      xl: string;
       pill: string;
       sm: string;
       md: string;
@@ -123,6 +133,7 @@ declare module 'styled-components' {
       small: string;
       medium: string;
       large: string;
+      glow: string;
       sm: string;
       md: string;
       lg: string;
@@ -132,6 +143,18 @@ declare module 'styled-components' {
       fast: string;
       slow: string;
       normal: string;
+      spring: string;
+    };
+    glass: {
+      light: string;
+      dark: string;
+      blur: string;
+      border: string;
+    };
+    gradients: {
+      primary: string;
+      dark: string;
+      card: string;
     };
   }
 }

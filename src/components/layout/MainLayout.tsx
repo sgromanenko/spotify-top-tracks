@@ -1,97 +1,50 @@
 import React from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { useAuth } from '../../context/AuthContext';
 import { usePlayer } from '../../context/PlayerContext';
-import Button from '../common/Button';
 import SpotifyPlayer from '../player/SpotifyPlayer';
-
-const Header = styled.header`
-  background-color: ${({ theme }) => theme.colors.background.elevated};
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: ${({ theme }) => theme.shadows.medium};
-`;
-
-const AppTitle = styled.h1`
-  color: ${({ theme }) => theme.colors.primary.main};
-  font-size: ${({ theme }) => theme.typography.h4.fontSize};
-  margin: 0;
-`;
-
-const NavContainer = styled.nav`
-  display: flex;
-  gap: 1rem;
-`;
+import Sidebar from './Sidebar';
+import TopBar from './TopBar';
 
 const AppContainer = styled.div`
+  display: flex;
   min-height: 100vh;
+  background: ${({ theme }) => theme.gradients.dark};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const MainContent = styled.div`
+  flex: 1;
+  margin-left: 240px; /* Match sidebar width */
   display: flex;
   flex-direction: column;
+  position: relative;
+  min-height: 100vh;
 `;
 
-const Content = styled.main`
+const ContentArea = styled.main`
   flex: 1;
-  padding: 2rem;
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-  padding-bottom: 7rem; /* Add padding to prevent content from being hidden by the player */
-`;
-
-const StyledNavLink = styled(NavLink)`
-  color: ${({ theme }) => theme.colors.text.secondary};
-  text-decoration: none;
-  padding: 0.5rem 0.75rem;
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  transition: ${({ theme }) => theme.transitions.default};
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.text.primary};
-    background-color: ${({ theme }) => theme.colors.background.paper};
-    text-decoration: none;
-  }
-
-  &.active {
-    color: ${({ theme }) => theme.colors.primary.main};
-    background-color: ${({ theme }) => theme.colors.background.paper};
-  }
-`;
-
-const UserSection = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  padding: ${({ theme }) => theme.space.xl};
+  padding-bottom: 100px; /* Space for player */
 `;
 
 const MainLayout: React.FC = () => {
-  const { logout } = useAuth();
-  const { isReady, playerState } = usePlayer();
-
-  // Determine whether to show the player based on whether it's initialized and has a track
-  const showPlayer = isReady && playerState;
+  const { isReady } = usePlayer();
+  // Always show player if it's ready (initialized), even if no track is playing yet
+  // The SpotifyPlayer component handles the "empty" state
+  const showPlayer = isReady;
 
   return (
     <AppContainer>
-      <Header>
-        <AppTitle>Spotify Tracks</AppTitle>
-        <NavContainer>
-          <StyledNavLink to="/top-tracks">Top Tracks</StyledNavLink>
-          <StyledNavLink to="/playlists">Playlists</StyledNavLink>
-        </NavContainer>
-        <UserSection>
-          <Button onClick={logout} variant="secondary" size="small">
-            Logout
-          </Button>
-        </UserSection>
-      </Header>
-      <Content>
-        <Outlet />
-      </Content>
-      {showPlayer && <SpotifyPlayer />}
+      <Sidebar />
+      <MainContent>
+        <TopBar />
+        <ContentArea>
+          <Outlet />
+        </ContentArea>
+        {showPlayer && <SpotifyPlayer />}
+      </MainContent>
     </AppContainer>
   );
 };
