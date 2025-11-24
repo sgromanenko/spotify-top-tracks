@@ -75,7 +75,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Derived state
   const shuffleState = playerState?.shuffle ?? false;
-  const repeatMode = playerState?.repeat_mode === 1 ? 'context' : playerState?.repeat_mode === 2 ? 'track' : 'off';
+  const repeatMode: 'off' | 'context' | 'track' = 
+    playerState?.repeat_mode === 1 ? 'context' : 
+    playerState?.repeat_mode === 2 ? 'track' : 'off';
 
   // Initialize the player
   useEffect(() => {
@@ -211,7 +213,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       try {
-        await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+        const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
           method: 'PUT',
           body: JSON.stringify({ uris: [trackUri] }),
           headers: {
@@ -219,6 +221,39 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             Authorization: `Bearer ${token}`,
           },
         });
+
+        if (response.status === 404) {
+          console.error('Device not found or not active. Attempting to reactivate...');
+          // Try to transfer playback again
+          try {
+            await fetch(`https://api.spotify.com/v1/me/player`, {
+              method: 'PUT',
+              body: JSON.stringify({ device_ids: [deviceId], play: false }),
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            // Wait a bit and try to play again
+            setTimeout(async () => {
+              await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ uris: [trackUri] }),
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+            }, 500);
+          } catch (retryError) {
+            console.error('Failed to reactivate device:', retryError);
+            setError('Device is not available. Please ensure Spotify is open or select a different device.');
+          }
+        } else if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          console.error('Playback error:', errorData);
+          setError(`Playback failed: ${errorData?.error?.message || response.statusText}`);
+        }
       } catch (error) {
         console.error('Error playing track:', error);
         setError('Failed to play track');

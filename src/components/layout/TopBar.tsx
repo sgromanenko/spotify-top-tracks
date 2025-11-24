@@ -105,13 +105,13 @@ const TopBar = () => {
       <UserSection>
         <UserPill>
           <Avatar>
-            {user?.images?.[0]?.url ? (
-              <img src={user.images[0].url} alt={user.display_name} style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+            {user?.profileImage ? (
+              <img src={user.profileImage} alt={user.displayName} style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
             ) : (
               <User size={16} />
             )}
           </Avatar>
-          <UserName>{user?.display_name || 'User'}</UserName>
+          <UserName>{user?.displayName || 'User'}</UserName>
         </UserPill>
         <Button onClick={logout} variant="secondary" size="small">
           Logout

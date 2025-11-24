@@ -142,10 +142,10 @@ const Home = () => {
         <SectionTitle>Recently Played</SectionTitle>
         <Grid>
           {recentTracks.map((track) => (
-            <Card key={track.id} onClick={() => playTrack(track.id)}>
+            <Card key={track.id} onClick={() => playTrack(`spotify:track:${track.id}`)}>
               <CardImage>
                 <img src={track.album.images[0]?.url} alt={track.name} />
-                <PlayButton className="play-button" onClick={(e) => handlePlay(e, track.id)}>
+                <PlayButton className="play-button" onClick={(e) => handlePlay(e, `spotify:track:${track.id}`)}>
                   <Play size={24} fill="currentColor" />
                 </PlayButton>
               </CardImage>
@@ -173,17 +173,21 @@ const Home = () => {
 
       <Section>
         <SectionTitle>Featured Playlists</SectionTitle>
-        <Grid>
-          {featuredPlaylists.map((playlist) => (
-            <Card key={playlist.id}>
-              <CardImage>
-                <img src={playlist.images[0]?.url} alt={playlist.name} />
-              </CardImage>
-              <CardTitle>{playlist.name}</CardTitle>
-              <CardSubtitle>{playlist.description}</CardSubtitle>
-            </Card>
-          ))}
-        </Grid>
+        {featuredPlaylists.length > 0 ? (
+          <Grid>
+            {featuredPlaylists.map((playlist) => (
+              <Card key={playlist.id}>
+                <CardImage>
+                  <img src={playlist.images[0]?.url} alt={playlist.name} />
+                </CardImage>
+                <CardTitle>{playlist.name}</CardTitle>
+                <CardSubtitle>{playlist.description}</CardSubtitle>
+              </Card>
+            ))}
+          </Grid>
+        ) : (
+          <CardSubtitle>No featured playlists available at the moment</CardSubtitle>
+        )}
       </Section>
     </HomeContainer>
   );
